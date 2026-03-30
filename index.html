@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Briyan Archive ✦</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header id="topbar">
+    <span id="topbar-brand">✦ The Briyan Archive</span>
+    <span id="topbar-tagline">stay curious ✧</span>
+    <span id="topbar-clock"></span>
+  </header>
+
+  <main id="desktop">
+
+    <!-- ── DESKTOP ICONS ──────────────────────────────────────── -->
+    <div id="icon-column">
+
+      <div class="desktop-icon" data-app="home" id="icon-home">
+        <div class="icon-graphic">🏠</div>
+        <span>Home</span>
+      </div>
+
+      <div class="desktop-icon" data-app="about" id="icon-about">
+        <div class="icon-graphic">👤</div>
+        <span>About Me</span>
+      </div>
+
+      <div class="desktop-icon" data-app="spotify" id="icon-spotify">
+        <div class="icon-graphic">🎵</div>
+        <span>Spotify</span>
+      </div>
+
+      <div class="desktop-icon" data-app="map" id="icon-map">
+        <div class="icon-graphic">🗺️</div>
+        <span>My Map</span>
+      </div>
+
+      <div class="desktop-icon" data-app="blog" id="icon-blog">
+        <div class="icon-graphic">📓</div>
+        <span>Blog</span>
+      </div>
+
+    </div>
+
+
+    <!-- ── WINDOWS ────────────────────────────────────────────── -->
+
+    <!-- ——— HOME ——— -->
+    <div class="window" id="win-home">
+      <div class="window-titlebar">
+        <div class="titlebar-dots">
+          <span class="dot dot-close"></span>
+          <span class="dot dot-min"></span>
+          <span class="dot dot-max"></span>
+        </div>
+        <span class="window-title">✦ Home ✦</span>
+      </div>
+      <div class="window-body">
+        <h1 class="welcome-heading">Welcome ✦</h1>
+        <p class="welcome-sub">briyan's section on the internet for braindumps</p>
+
+        <div class="home-marquee-wrap">
+          <div class="home-marquee">
+            <span>✦ music</span><span>✧ app development </span><span>✦ coding</span><span>✧ travel</span><span>✦ photography</span><span>✧ archive 4 tams</span>
+            <span>✦ music</span><span>✧ app development</span><span>✦ coding</span><span>✧ travel</span><span>✦ photography</span><span>✧ archive 4 tams</span>
+          </div>
+        </div>
+
+        <div class="home-grid">
+          <button class="home-card" data-app="about">
+            <div class="icon-graphic">👋</div>
+            <span>About Me</span>
+          </button>
+          <button class="home-card" data-app="map">
+            <div class="icon-graphic">🗺️</div>
+            <span>My Travel Map</span>
+          </button>
+          <button class="home-card" data-app="spotify">
+            <div class="icon-graphic">🎵</div>
+            <span>Spotify</span>
+          </button>
+        </div>
+
+        <p class="home-section-label">✧ currently</p>
+        <div class="home-now-row">
+          <div class="home-now-dot"></div>
+          <div class="home-now-text">
+            <strong>listening to</strong> — whatever my mood is<br>
+            <strong>developing</strong> — this website and other sidequests
+          </div>
+        </div>
+
+        <div class="home-footer-row">
+          <span class="home-footer-hint">✧ click on any of the suggested apps! ✧</span>
+          <span class="tag">The Briyan Archive</span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ——— ABOUT ME ——— -->
+    <div class="window" id="win-about" data-title="About Me">
+      <div class="window-titlebar">
+        <div class="titlebar-dots">
+          <span class="dot dot-close"></span>
+          <span class="dot dot-min"></span>
+          <span class="dot dot-max"></span>
+        </div>
+        <span class="window-title">About Me</span>
+      </div>
+      <div class="window-body about-body">
+        <div class="about-avatar">🔭</div>
+        <h2 class="about-name">Briyan Dyju ✦</h2>
+        <p class="about-role">Student · Developer · HCB staff</p>
+        <div class="about-divider"></div>
+        <p class="about-bio">Hey! I'm Briyan, a student and teen developer who loves making random projects and trying new stuff. I make things I don’t fully understand yet but that’s the point.</p>
+        <div class="about-tags">
+          <span class="tag">✦ coding</span>
+          <span class="tag">✧ app dev</span>
+          <span class="tag">✦ music</span>
+          <span class="tag">✧ photography</span>
+          <span class="tag">✦ travelling</span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ——— SPOTIFY ——— -->
+    <div class="window" id="win-spotify" data-title="Spotify">
+      <div class="window-titlebar">
+        <div class="titlebar-dots">
+          <span class="dot dot-close"></span>
+          <span class="dot dot-min"></span>
+          <span class="dot dot-max"></span>
+        </div>
+        <span class="window-title">Spotify ✧</span>
+      </div>
+      <div class="window-body spotify-body">
+        <p class="spotify-label">✦ current rotation</p>
+        <iframe
+          id="spotify-iframe"
+          src="https://open.spotify.com/embed/playlist/37i9dQZF1DX4WYpdgoIcn6?utm_source=generator&theme=0"
+          width="100%"
+          height="380"
+          frameborder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+          allowfullscreen>
+        </iframe>
+        <p class="spotify-hint">✧ My top go-to tracks.</p>
+      </div>
+    </div>
+
+
+    <!-- ——— MY MAP ——— -->
+    <div class="window" id="win-map" data-title="My Map">
+      <div class="window-titlebar">
+        <div class="titlebar-dots">
+          <span class="dot dot-close"></span>
+          <span class="dot dot-min"></span>
+          <span class="dot dot-max"></span>
+        </div>
+        <span class="window-title">My Map ✦</span>
+      </div>
+      <div class="window-body map-body">
+        <p class="map-label">✧ places i've been</p>
+        <div id="leaflet-map"></div>
+      </div>
+    </div>
+
+
+    <div class="window" id="win-blog">
+      <div class="window-titlebar">
+        <div class="titlebar-dots">
+          <span class="dot dot-close"></span>
+          <span class="dot dot-min"></span>
+          <span class="dot dot-max"></span>
+        </div>
+        <span class="window-title">✦ Blog ✦</span>
+      </div>
+      <div class="window-body blog-list-body">
+        <div class="blog-list-header">
+          <h2 class="blog-list-title">The Archive ✦</h2>
+          <p class="blog-list-sub">thoughts, travels &amp; in-betweens</p>
+        </div>
+        <div id="blog-entries">
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="window" id="win-blog-post">
+      <div class="window-titlebar">
+        <div class="titlebar-dots">
+          <span class="dot dot-close"></span>
+          <span class="dot dot-min"></span>
+          <span class="dot dot-max"></span>
+        </div>
+        <span class="window-title" id="blog-post-win-title">✧ post ✧</span>
+      </div>
+      <div class="window-body blog-post-body" id="blog-post-body">
+      </div>
+    </div>
+
+
+    <div class="window widget" id="win-weather">
+      <div class="window-titlebar">
+        <div class="titlebar-dots">
+          <span class="dot dot-close"></span>
+          <span class="dot dot-min"></span>
+          <span class="dot dot-max"></span>
+        </div>
+        <span class="window-title">✦ Weather ✦</span>
+      </div>
+      <div class="window-body widget-body" id="weather-body">
+        <div class="widget-loading">fetching weather...</div>
+      </div>
+    </div>
+
+
+    <div class="window widget" id="win-photo">
+      <div class="window-titlebar">
+        <div class="titlebar-dots">
+          <span class="dot dot-close"></span>
+          <span class="dot dot-min"></span>
+          <span class="dot dot-max"></span>
+        </div>
+        <span class="window-title">✧ daily photo ✧</span>
+      </div>
+      <div class="window-body photo-widget-body" id="photo-body">
+        <!-- Filled by initPhotoWidget() in script.js -->
+      </div>
+    </div>
+
+  </main><!-- end #desktop -->
+
+  <script src="blogs.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
