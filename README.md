@@ -13,9 +13,10 @@
 ## Description
 
 A personal site presented as a draggable desktop operating system. Desktop icons open
-"windows" (Home, About, Spotify, Map, Blog) that you can move and focus, plus always-on
-widgets. Content — blog posts and the rotating photo widget — lives in `blogs.js`; the window
-manager, drag logic, map, and widgets live in `script.js`.
+"windows" (Home, About, Spotify, Map, Blog) that you can move and focus, plus an always-on
+weather widget. Content — blog posts — lives in `blogs.js`; the window manager, drag logic,
+map, and widgets live in `script.js`. Below 768px, windows pin to a fixed near-full-screen
+slot instead of being draggable.
 
 ## Features
 
@@ -24,7 +25,6 @@ manager, drag logic, map, and widgets live in `script.js`.
 - **Blog** — a list view and post viewer (single- and multi-day posts, image carousels), driven from `blogs.js`.
 - **Spotify embed** — current playlist rotation.
 - **Live weather widget** — current Dubai conditions from Open-Meteo.
-- **Photo-of-the-day widget** — auto-rotating photo carousel.
 
 ## How to Build / Run
 
@@ -41,6 +41,6 @@ Pages to the domain in `CNAME`.
 
 ### Editing content
 
-- **Blog posts / photos:** edit `blogs.js` (`BLOG_POSTS` and `PHOTO_OF_DAY`).
+- **Blog posts:** edit `blogs.js` (`BLOG_POSTS`).
 - **Places on the map:** edit `PLACES_IVE_BEEN` in `script.js`.
 - **Wallpaper:** replace `image.png`.
