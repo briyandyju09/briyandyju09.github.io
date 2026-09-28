@@ -1,44 +1,11 @@
 /* ================================================================
    blogs.js  —  YOUR CONTENT LIVES HERE
    ────────────────────────────────────────────────────────────────
-   Two things to edit in this file:
-     1. PHOTO_OF_DAY  — photos that rotate in the desktop widget
-     2. BLOG_POSTS    — your blog entries
+   Edit BLOG_POSTS below to add your blog entries.
 
-   Both support local file paths (e.g. 'photos/myshot.jpg')
+   Photos support local file paths (e.g. 'photos/myshot.jpg')
    or any full URL. No other files need to be touched.
 ================================================================ */
-
-
-/* ════════════════════════════════════════════════════════════════
-   PHOTO OF THE DAY  (desktop widget, right side)
-   ────────────────────────────────────────────────────────────────
-   • Rotates every PHOTO_ROTATION_MS milliseconds (default 9 s).
-   • Click ‹ › arrows on the widget to navigate manually.
-
-   TO ADD A PHOTO:
-     1. Drop your image anywhere in the website folder.
-     2. Add a new entry below:
-          { src: 'photos/morning.jpg', caption: 'Dubai — quiet morning' },
-════════════════════════════════════════════════════════════════ */
-const PHOTO_ROTATION_MS = 9000;
-
-const PHOTO_OF_DAY = [
-  {
-    src:     'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=500&q=80',
-    caption: 'Dubai — city of gold',
-  },
-  {
-    src:     'https://images.unsplash.com/photo-1580674684081-7617fbf3d745?w=500&q=80',
-    caption: 'marina nights',
-  },
-  {
-    src:     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80',
-    caption: 'somewhere far away',
-  },
-  // ── Add your own photos below ──────────────────────────────
-  // { src: 'photos/your-photo.jpg', caption: 'your caption here' },
-];
 
 
 /* ════════════════════════════════════════════════════════════════
