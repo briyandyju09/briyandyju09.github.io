@@ -2,7 +2,7 @@
    myOS — script.js
    Handles: clock · window management · drag · map · blog · widgets
    ────────────────────────────────────────────────────────────────
-   CONTENT lives in blogs.js (BLOG_POSTS + PHOTO_OF_DAY).
+   CONTENT lives in blogs.js (BLOG_POSTS).
    This file is the engine — you rarely need to edit it.
 ================================================================ */
 
@@ -16,7 +16,6 @@ const APP_REGISTRY = {
   blog:        { title: 'Blog',        winId: 'win-blog',      onOpen: initBlogList },
   'blog-post': { title: 'Post',        winId: 'win-blog-post', onOpen: null },
   weather:     { title: 'Weather',     winId: 'win-weather',   onOpen: null },
-  photo:       { title: 'Daily Photo', winId: 'win-photo',     onOpen: null },
 };
 
 
@@ -93,6 +92,10 @@ document.querySelectorAll('.window-titlebar').forEach(tb => {
 
 function startDrag(e) {
   if (e.target.classList.contains('dot')) return;
+  // Below 768px, windows are pinned full-screen by CSS and there's no
+  // mouse to drag with anyway (touch only) — skip entirely.
+  if (window.matchMedia('(max-width: 768px)').matches) return;
+
   const win     = e.currentTarget.closest('.window');
   const desktop = document.getElementById('desktop');
   focusWin(win);
@@ -425,80 +428,6 @@ async function fetchDubaiWeather() {
 
 
 /* ════════════════════════════════════════════════════════════════
-   PHOTO OF THE DAY WIDGET
-════════════════════════════════════════════════════════════════ */
-
-let photoIndex = 0;
-let photoTimer = null;
-
-function initPhotoWidget() {
-  const body = document.getElementById('photo-body');
-  if (!body || !PHOTO_OF_DAY || !PHOTO_OF_DAY.length) return;
-
-  const isSingle = PHOTO_OF_DAY.length === 1;
-  const dots = !isSingle
-    ? `<div class="photo-dots">
-        ${PHOTO_OF_DAY.map((_, i) => `<div class="photo-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></div>`).join('')}
-       </div>`
-    : '';
-
-  body.innerHTML = `
-    <div class="photo-widget-frame${isSingle ? ' photo-single' : ''}" id="photo-frame">
-      <img class="photo-widget-img" id="photo-img"
-           src="${escapeHTML(PHOTO_OF_DAY[0].src)}"
-           alt="${escapeHTML(PHOTO_OF_DAY[0].caption || '')}" />
-      <button class="photo-nav-btn photo-nav-prev" id="photo-prev">‹</button>
-      <button class="photo-nav-btn photo-nav-next" id="photo-next">›</button>
-      ${dots}
-    </div>
-    <div class="photo-widget-caption">
-      <strong>✦ photo</strong>
-      <span id="photo-caption">${escapeHTML(PHOTO_OF_DAY[0].caption || '')}</span>
-    </div>
-  `;
-
-  const img     = body.querySelector('#photo-img');
-  const caption = body.querySelector('#photo-caption');
-
-  img.addEventListener('error', () => {
-    img.style.display = 'none';
-    const frame = body.querySelector('#photo-frame');
-    if (!frame.querySelector('.photo-widget-placeholder')) {
-      const ph = document.createElement('div');
-      ph.className = 'photo-widget-placeholder';
-      frame.insertBefore(ph, frame.firstChild);
-    }
-  });
-
-  const goToPhoto = (idx) => {
-    photoIndex = (idx + PHOTO_OF_DAY.length) % PHOTO_OF_DAY.length;
-    const photo = PHOTO_OF_DAY[photoIndex];
-    img.style.opacity = '0';
-    setTimeout(() => {
-      img.src = photo.src; img.alt = photo.caption || '';
-      img.style.display = '';
-      body.querySelector('.photo-widget-placeholder')?.remove();
-      img.style.opacity = '1';
-      if (caption) caption.textContent = photo.caption || '';
-    }, 250);
-    body.querySelectorAll('.photo-dot').forEach((d, i) => d.classList.toggle('active', i === photoIndex));
-    if (photoTimer) clearInterval(photoTimer);
-    photoTimer = setInterval(() => goToPhoto(photoIndex + 1), PHOTO_ROTATION_MS);
-  };
-
-  body.querySelector('#photo-prev')?.addEventListener('click', e => { e.stopPropagation(); goToPhoto(photoIndex - 1); });
-  body.querySelector('#photo-next')?.addEventListener('click', e => { e.stopPropagation(); goToPhoto(photoIndex + 1); });
-  body.querySelectorAll('.photo-dot').forEach(dot => {
-    dot.addEventListener('click', e => { e.stopPropagation(); goToPhoto(parseInt(dot.dataset.idx)); });
-  });
-
-  if (PHOTO_OF_DAY.length > 1) {
-    photoTimer = setInterval(() => goToPhoto(photoIndex + 1), PHOTO_ROTATION_MS);
-  }
-}
-
-
-/* ════════════════════════════════════════════════════════════════
    WIDGET POSITIONING
 ════════════════════════════════════════════════════════════════ */
 function openWidgets() {
@@ -514,16 +443,6 @@ function openWidgets() {
       focusWin(weatherWin);
       fetchDubaiWeather();
       setInterval(fetchDubaiWeather, 10 * 60 * 1000);
-    }
-
-    // Snug below weather: titlebar(42) + content(~178) + borders(2) + gap(10) = 232
-    const photoWin = document.getElementById('win-photo');
-    if (photoWin) {
-      photoWin.style.left = `${rightX}px`;
-      photoWin.style.top  = '252px';
-      photoWin.classList.add('window-open');
-      focusWin(photoWin);
-      initPhotoWidget();
     }
   }, 120);
 }
