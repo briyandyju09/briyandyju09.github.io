@@ -15,6 +15,7 @@ const APP_REGISTRY = {
   map:         { title: 'My Map',      winId: 'win-map',       onOpen: initMapApp },
   blog:        { title: 'Blog',        winId: 'win-blog',      onOpen: initBlogList },
   'blog-post': { title: 'Post',        winId: 'win-blog-post', onOpen: null },
+  projects:    { title: 'Projects',    winId: 'win-projects',  onOpen: initProjectsApp },
   weather:     { title: 'Weather',     winId: 'win-weather',   onOpen: null },
 };
 
@@ -360,6 +361,64 @@ function renderBlogPost(post) {
     const wrap = body.querySelector(`#carousel-${post.id}-d${di}`);
     if (wrap) wireCarousel(wrap, day.photos.length);
   });
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   PROJECTS APP  (live from GitHub)
+════════════════════════════════════════════════════════════════ */
+
+const GITHUB_USERNAME = 'briyandyju09';
+const PROJECTS_EXCLUDE = new Set([
+  'briyandyju09.github.io', // this site itself
+  'briyandyju09',           // GitHub profile-README repo
+]);
+
+let projectsInit = false;
+
+function formatRelativeDate(iso) {
+  const days = Math.floor((Date.now() - new Date(iso)) / 86400000);
+  if (days < 1)  return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
+
+async function initProjectsApp() {
+  if (projectsInit) return;
+  projectsInit = true;
+
+  const container = document.getElementById('projects-list');
+  if (!container) return;
+
+  try {
+    const r = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=pushed&direction=desc&per_page=15`);
+    if (!r.ok) throw new Error('bad response');
+    const repos = (await r.json()).filter(repo => !repo.fork && !PROJECTS_EXCLUDE.has(repo.name));
+
+    if (!repos.length) {
+      container.innerHTML = `<div class="blog-empty">✧ no public repos found ✧</div>`;
+      return;
+    }
+
+    container.innerHTML = repos.map(repo => `
+      <a class="project-card" href="${repo.html_url}" target="_blank" rel="noopener noreferrer">
+        <div class="project-card-top">
+          <span class="project-name">${escapeHTML(repo.name)}</span>
+          ${repo.stargazers_count ? `<span class="project-stars">★ ${repo.stargazers_count}</span>` : ''}
+        </div>
+        <div class="project-desc">${escapeHTML(repo.description || 'no description yet')}</div>
+        <div class="project-meta">
+          ${repo.language ? `<span class="project-lang">${escapeHTML(repo.language)}</span>` : ''}
+          <span class="project-updated">updated ${formatRelativeDate(repo.pushed_at)}</span>
+        </div>
+      </a>
+    `).join('');
+  } catch {
+    container.innerHTML = `<div class="blog-empty">✧ couldn't load projects ✧</div>`;
+  }
 }
 
 
