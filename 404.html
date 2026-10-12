@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Page not found · The Briyan Archive</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script>
+    try {
+      var t = localStorage.getItem('archive-theme');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400..600&family=Geist:wght@400..600&family=Instrument+Serif&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/tokens.css" />
+  <style>
+    :root { --ink-3: #6b6b6b; }
+    :root[data-theme="dark"] { --ink-3: #8a8a8a; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink-3: #8a8a8a; } }
+    body { min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+    main { width: min(440px, 100%); }
+    .code { font: 400 12px/1 var(--mono); color: var(--ink-2); margin-bottom: 14px; }
+    h1 { font: 400 56px/1.02 var(--display); letter-spacing: -0.015em; margin: 0 0 12px; }
+    p { margin: 0 0 24px; color: var(--ink-2); font-size: 14px; max-width: 46ch; }
+    a.key {
+      display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; margin-bottom: 5px;
+      background: var(--raise); color: var(--ink); text-decoration: none;
+      border: 1px solid var(--line); border-radius: var(--r-key); box-shadow: 0 5px 0 var(--edge);
+      font: 550 13.5px/1 var(--sans);
+      transition: transform var(--t-press), box-shadow var(--t-press), background var(--t-press), color var(--t-press);
+    }
+    a.key:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--edge); background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="code">404</p>
+    <h1>Nothing here</h1>
+    <p>That page doesn’t exist, or it moved. The archive has everything that’s left.</p>
+    <a class="key" href="/">Back to the archive</a>
+  </main>
+</body>
+</html>
