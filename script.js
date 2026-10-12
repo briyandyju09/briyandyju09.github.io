@@ -17,7 +17,27 @@ const APP_REGISTRY = {
   'blog-post': { title: 'Post',        winId: 'win-blog-post', onOpen: null },
   projects:    { title: 'Projects',    winId: 'win-projects',  onOpen: initProjectsApp },
   weather:     { title: 'Weather',     winId: 'win-weather',   onOpen: null },
+  music:       { title: 'Music',       winId: 'win-music',     onOpen: null },
 };
+
+/* Phones and small screens get a dock instead of an open desktop. */
+const isPhone = () => window.matchMedia('(max-width: 768px)').matches;
+const DOCK_RESERVE = 84;   // px kept clear at the bottom of the screen for the dock
+const DRAG_RESERVE = 150;  // ...and for the dock plus the music bar when dragging a window
+
+/* Monochrome icon from the sprite in index.html */
+function icon(name) {
+  return `<svg class="ic" aria-hidden="true"><use href="#ic-${name}"/></svg>`;
+}
+
+/* Dock: a dot under every app that is open */
+function syncRunning() {
+  Object.keys(APP_REGISTRY).forEach(key => {
+    const ic = document.getElementById(`icon-${key}`);
+    const win = document.getElementById(APP_REGISTRY[key].winId);
+    if (ic && win) ic.classList.toggle('running', win.classList.contains('window-open'));
+  });
+}
 
 
 /* ── 2. SYSTEM CLOCK ─────────────────────────────────────────────*/
@@ -45,14 +65,26 @@ function openApp(appKey) {
 
   const desktop = document.getElementById('desktop');
   const dw = desktop.clientWidth,  dh = desktop.clientHeight;
-  const ww = win.offsetWidth  || parseInt(win.style.width)  || 420;
-  const wh = win.offsetHeight || parseInt(win.style.height) || 320;
-  const jitter = () => (Math.random() - 0.5) * 60;
 
-  win.style.left = `${Math.max(10, (dw - ww) / 2 + jitter())}px`;
-  win.style.top  = `${Math.max(10, (dh - wh) / 2 + jitter())}px`;
+  if (isPhone()) {
+    // Phones: show the window first so its real size is known, then centre it
+    // above the dock. It can be dragged from its title bar.
+    win.classList.add('window-open');
+    const ww = win.offsetWidth, wh = win.offsetHeight;
+    const stagger = (document.querySelectorAll('.window.window-open:not(.widget)').length - 1) % 4 * 14;
+    win.style.left = `${Math.max(0, (dw - ww) / 2)}px`;
+    win.style.top  = `${Math.max(8, Math.min(8 + stagger, dh - wh - DOCK_RESERVE))}px`;
+  } else {
+    const ww = win.offsetWidth  || parseInt(win.style.width)  || 420;
+    const wh = win.offsetHeight || parseInt(win.style.height) || 320;
+    const jitter = () => (Math.random() - 0.5) * 60;
+
+    win.style.left = `${Math.max(10, (dw - ww) / 2 + jitter())}px`;
+    win.style.top  = `${Math.max(10, (dh - wh) / 2 + jitter())}px`;
+  }
   win.classList.add('window-open');
   focusWin(win);
+  syncRunning();
   if (typeof app.onOpen === 'function') app.onOpen(win);
 }
 
@@ -78,6 +110,7 @@ document.querySelectorAll('.dot-close').forEach(dot => {
   dot.addEventListener('click', e => {
     e.stopPropagation();
     dot.closest('.window').classList.remove('window-open');
+    syncRunning();
   });
 });
 
@@ -86,42 +119,62 @@ document.querySelectorAll('.home-card').forEach(btn => {
 });
 
 
-/* ── 5. DRAG ─────────────────────────────────────────────────────*/
+/* ── 5. DRAG ─────────────────────────────────────────────────────
+   Pointer events, so windows drag with a finger as well as a mouse.   */
 document.querySelectorAll('.window-titlebar').forEach(tb => {
-  tb.addEventListener('mousedown', startDrag);
+  tb.addEventListener('pointerdown', startDrag);
 });
 
 function startDrag(e) {
   if (e.target.classList.contains('dot')) return;
-  // Below 768px, windows are pinned full-screen by CSS and there's no
-  // mouse to drag with anyway (touch only) — skip entirely.
-  if (window.matchMedia('(max-width: 768px)').matches) return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
 
-  const win     = e.currentTarget.closest('.window');
+  const tb      = e.currentTarget;
+  const win     = tb.closest('.window');
   const desktop = document.getElementById('desktop');
   focusWin(win);
 
   const startX = e.clientX - win.offsetLeft;
-  const startY = e.clientY - win.offsetTop - parseInt(getComputedStyle(document.getElementById('topbar')).height);
+  const startY = e.clientY - win.offsetTop;
+  // keep the title bar reachable, and off the dock on phones
   const maxX   = () => desktop.clientWidth  - win.offsetWidth;
-  const maxY   = () => desktop.clientHeight - 40;
+  const maxY   = () => desktop.clientHeight - 40 - (isPhone() ? DRAG_RESERVE : 0);
+
+  tb.setPointerCapture(e.pointerId);
 
   function onMove(ev) {
-    const tbH = parseInt(getComputedStyle(document.getElementById('topbar')).height || 36);
-    win.style.left = `${Math.max(0, Math.min(ev.clientX - startX,          maxX()))}px`;
-    win.style.top  = `${Math.max(0, Math.min(ev.clientY - startY - tbH,    maxY()))}px`;
+    win.style.left = `${Math.max(0, Math.min(ev.clientX - startX, maxX()))}px`;
+    win.style.top  = `${Math.max(0, Math.min(ev.clientY - startY, maxY()))}px`;
   }
   function onUp() {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup',   onUp);
+    tb.removeEventListener('pointermove', onMove);
+    tb.removeEventListener('pointerup',   onUp);
+    tb.removeEventListener('pointercancel', onUp);
   }
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup',   onUp);
+  tb.addEventListener('pointermove', onMove);
+  tb.addEventListener('pointerup',   onUp);
+  tb.addEventListener('pointercancel', onUp);
 }
 
 
 /* ── 6. MAP APP ──────────────────────────────────────────────────*/
 let mapInstance = null;
+let mapTiles = [];
+
+/* Grey Esri basemaps (light and dark) instead of OpenStreetMap's volunteer-run
+   servers, which block sites that don't meet their tile usage policy. */
+function setMapTiles() {
+  if (!mapInstance) return;
+  mapTiles.forEach(layer => layer.remove());
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const kind = dark ? 'Dark' : 'Light';
+  const url  = part => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${kind}_Gray_${part}/MapServer/tile/{z}/{y}/{x}`;
+  mapTiles = [
+    L.tileLayer(url('Base'),      { attribution: 'Tiles © Esri', maxZoom: 16 }),
+    L.tileLayer(url('Reference'), { maxZoom: 16 }),
+  ];
+  mapTiles.forEach(layer => layer.addTo(mapInstance));
+}
 
 const PLACES_IVE_BEEN = [
   { name: 'Shanghai, China',  lat: 31.230391, lng: 121.473701, note: '✦ game Jam in Shanghai' },
@@ -135,21 +188,20 @@ const PLACES_IVE_BEEN = [
 function initMapApp() {
   if (mapInstance) return;
   mapInstance = L.map('leaflet-map').setView([20, 10], 2);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors', maxZoom: 18,
-  }).addTo(mapInstance);
+  setMapTiles();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setMapTiles);
 
   const icon = L.divIcon({
     className: '',
-    html: `<div style="width:12px;height:12px;background:#4ECDC4;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px #4ECDC4;"></div>`,
+    html: `<div style="width:12px;height:12px;background:var(--ink);border-radius:50%;border:2px solid var(--raise);"></div>`,
     iconSize: [12, 12], iconAnchor: [6, 6],
   });
 
   PLACES_IVE_BEEN.forEach(p => {
     L.marker([p.lat, p.lng], { icon })
       .addTo(mapInstance)
-      .bindPopup(`<strong style="font-family:Syne,sans-serif;font-size:13px;">${p.name}</strong><br>
-                  <span style="font-family:'Space Mono',monospace;font-size:11px;color:#666;">${p.note}</span>`);
+      .bindPopup(`<strong style="font-family:var(--font-ui);font-size:13px;">${p.name}</strong><br>
+                  <span style="font-family:var(--font-system);font-size:11px;color:var(--text-faint);">${p.note}</span>`);
   });
   setTimeout(() => mapInstance.invalidateSize(), 200);
 }
@@ -160,6 +212,14 @@ function initMapApp() {
 ════════════════════════════════════════════════════════════════ */
 
 let blogListInit = false;
+
+/* Posts may carry an emoji in blogs.js; show a monochrome icon for it instead. */
+const POST_ICONS = { '🧃': 'juice' };
+function postIcon(e) {
+  if (!e) return '✦';
+  if (POST_ICONS[e]) return icon(POST_ICONS[e]);
+  return /\p{Extended_Pictographic}/u.test(e) ? icon('blog') : escapeHTML(e);
+}
 
 function initBlogList() {
   if (blogListInit) return;
@@ -179,7 +239,7 @@ function initBlogList() {
     card.className    = 'blog-entry-card';
     card.dataset.postId = post.id;
     card.innerHTML = `
-      <div class="blog-entry-emoji">${post.emoji || '✦'}</div>
+      <div class="blog-entry-emoji">${postIcon(post.emoji)}</div>
       <div class="blog-entry-meta">
         <div class="blog-entry-title">${escapeHTML(post.title)}</div>
         <div class="blog-entry-date">${escapeHTML(post.date)}</div>
@@ -427,17 +487,17 @@ async function initProjectsApp() {
 ════════════════════════════════════════════════════════════════ */
 
 function getWeatherEmoji(code) {
-  if (code === 0) return '☀️';
-  if (code <= 2)  return '⛅';
-  if (code === 3) return '☁️';
-  if (code <= 48) return '🌫️';
-  if (code <= 55) return '🌦️';
-  if (code <= 67) return '🌧️';
-  if (code <= 77) return '🌨️';
-  if (code <= 82) return '🌦️';
-  if (code <= 86) return '🌨️';
-  if (code <= 99) return '⛈️';
-  return '🌤️';
+  if (code === 0) return icon('sun');
+  if (code <= 2)  return icon('partly');
+  if (code === 3) return icon('cloud');
+  if (code <= 48) return icon('fog');
+  if (code <= 55) return icon('drizzle');
+  if (code <= 67) return icon('rain');
+  if (code <= 77) return icon('snow');
+  if (code <= 82) return icon('rain');
+  if (code <= 86) return icon('snow');
+  if (code <= 99) return icon('storm');
+  return icon('partly');
 }
 function getWeatherDesc(code) {
   if (code === 0) return 'Clear sky';
@@ -474,8 +534,8 @@ async function fetchDubaiWeather() {
       <div class="weather-city">Dubai, AE</div>
       <div class="weather-desc">${getWeatherDesc(c.weather_code)}</div>
       <div class="weather-row">
-        <span>💨 ${Math.round(c.wind_speed_10m)} km/h</span>
-        <span>💧 ${c.relative_humidity_2m}%</span>
+        <span>${icon('wind')} ${Math.round(c.wind_speed_10m)} km/h</span>
+        <span>${icon('drop')} ${c.relative_humidity_2m}%</span>
       </div>
       <div class="weather-updated">updated ${tStr}</div>
     `;
@@ -489,20 +549,36 @@ async function fetchDubaiWeather() {
 /* ════════════════════════════════════════════════════════════════
    WIDGET POSITIONING
 ════════════════════════════════════════════════════════════════ */
+let weatherTimer = null;
+
 function openWidgets() {
   setTimeout(() => {
-    const dw      = document.getElementById('desktop').clientWidth;
+    const desk    = document.getElementById('desktop');
+    const dw      = desk.clientWidth;
     const rightX  = dw - 244 - 20;
 
+    // Music: bottom right on desktop; on phones it is a slim bar above the dock (CSS)
+    const musicWin = document.getElementById('win-music');
+    if (musicWin) {
+      musicWin.classList.add('window-open');
+      if (!isPhone()) {
+        musicWin.style.left = `${rightX}px`;
+        musicWin.style.top  = `${Math.max(20, desk.clientHeight - musicWin.offsetHeight - 20)}px`;
+        focusWin(musicWin);
+      }
+    }
+
+    // Weather: desktop only, so phones are not covered in widgets
     const weatherWin = document.getElementById('win-weather');
-    if (weatherWin) {
+    if (weatherWin && !isPhone()) {
       weatherWin.style.left = `${rightX}px`;
       weatherWin.style.top  = '20px';
       weatherWin.classList.add('window-open');
       focusWin(weatherWin);
       fetchDubaiWeather();
-      setInterval(fetchDubaiWeather, 10 * 60 * 1000);
+      if (!weatherTimer) weatherTimer = setInterval(fetchDubaiWeather, 10 * 60 * 1000);
     }
+    syncRunning();
   }, 120);
 }
 
@@ -517,6 +593,13 @@ function escapeHTML(str) {
 
 /* ── BOOT ────────────────────────────────────────────────────────*/
 window.addEventListener('load', () => {
-  openApp('home');
+  if (!isPhone()) openApp('home');   // phones start on the empty desktop with just the dock
+  openWidgets();
+});
+
+/* Rotating or resizing from phone to desktop: bring the desktop back */
+window.matchMedia('(max-width: 768px)').addEventListener('change', e => {
+  if (e.matches) return;
+  if (!document.querySelector('.window.window-open:not(.widget)')) openApp('home');
   openWidgets();
 });
