@@ -22,10 +22,10 @@ const APP_REGISTRY = {
 
 /* Phones and small screens get a dock instead of an open desktop. */
 const isPhone = () => window.matchMedia('(max-width: 768px)').matches;
-const DOCK_RESERVE = 84;   // px kept clear at the bottom of the screen for the dock
-const DRAG_RESERVE = 150;  // ...and for the dock plus the music bar when dragging a window
+const DOCK_RESERVE = 96;   // px kept clear at the bottom of the screen for the dock
+const DRAG_RESERVE = 172;  // ...and for the dock plus the music bar when dragging a window
 
-/* Monochrome icon from the sprite in index.html */
+/* Icon from the sprite in index.html */
 function icon(name) {
   return `<svg class="ic" aria-hidden="true"><use href="#ic-${name}"/></svg>`;
 }
@@ -162,7 +162,8 @@ let mapInstance = null;
 let mapTiles = [];
 
 /* Grey Esri basemaps (light and dark) instead of OpenStreetMap's volunteer-run
-   servers, which block sites that don't meet their tile usage policy. */
+   servers, which block sites that don't meet their tile usage policy. The
+   marker pins and popups on top of them are Gumdrop bubbles (style.css). */
 function setMapTiles() {
   if (!mapInstance) return;
   mapTiles.forEach(layer => layer.remove());
@@ -177,12 +178,12 @@ function setMapTiles() {
 }
 
 const PLACES_IVE_BEEN = [
-  { name: 'Shanghai, China',  lat: 31.230391, lng: 121.473701, note: '✦ game Jam in Shanghai' },
-  { name: 'Yerevan, Armenia', lat: 40.069099, lng:  45.038189, note: '✧ city of lights' },
-  { name: 'Vermont, USA',     lat: 44.558804, lng: -72.577843, note: '✦ hackclub intern 2026' },
-  { name: 'Kerala, India',    lat:  9.318328, lng:  76.611084, note: '✧ pure peace' },
-  { name: 'Delhi, India',     lat: 28.704060, lng:  77.102493, note: '✦ first ever hackathon' },
-  { name: 'Dubai, UAE',       lat: 25.2048,   lng:  55.2708,   note: '✧ home base' },
+  { name: 'Shanghai, China',  lat: 31.230391, lng: 121.473701, note: 'game jam in shanghai' },
+  { name: 'Yerevan, Armenia', lat: 40.069099, lng:  45.038189, note: 'city of lights' },
+  { name: 'Vermont, USA',     lat: 44.558804, lng: -72.577843, note: 'Hack Club intern 2026' },
+  { name: 'Kerala, India',    lat:  9.318328, lng:  76.611084, note: 'pure peace' },
+  { name: 'Delhi, India',     lat: 28.704060, lng:  77.102493, note: 'first ever hackathon' },
+  { name: 'Dubai, UAE',       lat: 25.2048,   lng:  55.2708,   note: 'home base' },
 ];
 
 function initMapApp() {
@@ -193,15 +194,14 @@ function initMapApp() {
 
   const icon = L.divIcon({
     className: '',
-    html: `<div style="width:12px;height:12px;background:var(--ink);border-radius:50%;border:2px solid var(--raise);"></div>`,
-    iconSize: [12, 12], iconAnchor: [6, 6],
+    html: '<div class="map-pin"></div>',
+    iconSize: [20, 20], iconAnchor: [10, 10],
   });
 
   PLACES_IVE_BEEN.forEach(p => {
-    L.marker([p.lat, p.lng], { icon })
+    L.marker([p.lat, p.lng], { icon, title: p.name })
       .addTo(mapInstance)
-      .bindPopup(`<strong style="font-family:var(--font-ui);font-size:13px;">${p.name}</strong><br>
-                  <span style="font-family:var(--font-system);font-size:11px;color:var(--text-faint);">${p.note}</span>`);
+      .bindPopup(`<span class="pop-name">${p.name}</span><span class="pop-note">${p.note}</span>`);
   });
   setTimeout(() => mapInstance.invalidateSize(), 200);
 }
@@ -216,9 +216,9 @@ let blogListInit = false;
 /* Posts may carry an emoji in blogs.js; show a monochrome icon for it instead. */
 const POST_ICONS = { '🧃': 'juice' };
 function postIcon(e) {
-  if (!e) return '✦';
+  if (!e) return icon('blog');
   if (POST_ICONS[e]) return icon(POST_ICONS[e]);
-  return /\p{Extended_Pictographic}/u.test(e) ? icon('blog') : escapeHTML(e);
+  return /[✀-➿\p{Extended_Pictographic}]/u.test(e) ? icon('blog') : escapeHTML(e);
 }
 
 function initBlogList() {
@@ -229,7 +229,7 @@ function initBlogList() {
   if (!container) return;
 
   if (!BLOG_POSTS || !BLOG_POSTS.length) {
-    container.innerHTML = `<div class="blog-empty">✧ no posts yet — add some in blogs.js ✧</div>`;
+    container.innerHTML = `<div class="blog-empty">no posts yet. add some in blogs.js</div>`;
     return;
   }
 
@@ -263,7 +263,7 @@ function openBlogPost(postId) {
   if (!win) return;
 
   const titleEl = document.getElementById('blog-post-win-title');
-  if (titleEl) titleEl.textContent = `✧ ${post.title} ✧`;
+  if (titleEl) titleEl.textContent = post.title;
 
   if (win.classList.contains('window-open')) {
     focusWin(win);
@@ -314,8 +314,8 @@ function buildCarouselHTML(photos, carouselId) {
   return `
     <div class="carousel-wrap${isSingle ? ' carousel-single' : ''}" id="${carouselId}">
       <div class="carousel-stage">${slides}</div>
-      <button class="carousel-btn carousel-btn-prev">‹</button>
-      <button class="carousel-btn carousel-btn-next">›</button>
+      <button class="carousel-btn carousel-btn-prev" type="button" aria-label="previous photo">‹</button>
+      <button class="carousel-btn carousel-btn-next" type="button" aria-label="next photo">›</button>
       ${dots}
     </div>
   `;
@@ -459,7 +459,7 @@ async function initProjectsApp() {
     const repos = (await r.json()).filter(repo => !repo.fork && !PROJECTS_EXCLUDE.has(repo.name));
 
     if (!repos.length) {
-      container.innerHTML = `<div class="blog-empty">✧ no public repos found ✧</div>`;
+      container.innerHTML = `<div class="blog-empty">no public repos found</div>`;
       return;
     }
 
@@ -477,7 +477,7 @@ async function initProjectsApp() {
       </a>
     `).join('');
   } catch {
-    container.innerHTML = `<div class="blog-empty">✧ couldn't load projects ✧</div>`;
+    container.innerHTML = `<div class="blog-empty">couldn't load projects. try again in a bit</div>`;
   }
 }
 
@@ -530,7 +530,7 @@ async function fetchDubaiWeather() {
 
     body.innerHTML = `
       <div class="weather-emoji">${getWeatherEmoji(c.weather_code)}</div>
-      <div class="weather-temp">${Math.round(c.temperature_2m)}°C</div>
+      <div class="weather-temp">${Math.round(c.temperature_2m)}<span class="unit">°C</span></div>
       <div class="weather-city">Dubai, AE</div>
       <div class="weather-desc">${getWeatherDesc(c.weather_code)}</div>
       <div class="weather-row">
@@ -541,7 +541,7 @@ async function fetchDubaiWeather() {
     `;
   } catch {
     const b = document.getElementById('weather-body');
-    if (b) b.innerHTML = `<div class="widget-loading">couldn't fetch weather ✧</div>`;
+    if (b) b.innerHTML = `<div class="widget-loading">couldn't fetch weather</div>`;
   }
 }
 
@@ -555,7 +555,7 @@ function openWidgets() {
   setTimeout(() => {
     const desk    = document.getElementById('desktop');
     const dw      = desk.clientWidth;
-    const rightX  = dw - 244 - 20;
+    const rightX  = dw - 264 - 20;
 
     // Music: bottom right on desktop; on phones it is a slim bar above the dock (CSS)
     const musicWin = document.getElementById('win-music');

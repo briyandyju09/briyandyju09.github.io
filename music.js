@@ -278,7 +278,7 @@
     win.classList.toggle('playing', running);
     elTitle.textContent = track ? track.title : 'Warming up…';
     const info = track ? `${track.bpm} bpm · key of ${track.keyName}` : 'made up on the spot';
-    elMeta.textContent = running ? info : (userPaused ? `paused · ${info}` : 'tap anywhere to start ✧');
+    elMeta.textContent = running ? info : (userPaused ? `paused · ${info}` : 'tap anywhere to start');
     btnPlay.setAttribute('aria-label', running ? 'Pause' : 'Play');
     const use = btnPlay.querySelector('use');
     if (use) use.setAttribute('href', running ? '#ic-pause' : '#ic-play');

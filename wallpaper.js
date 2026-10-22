@@ -1,100 +1,45 @@
-(function () {
-  const canvas = document.getElementById('wallpaper');
-  if (!canvas || !canvas.getContext) return;
-  const ctx = canvas.getContext('2d');
-
-  /* Deterministic value noise, so the picture is the same every visit. */
-  function hash(x, y) {
-    let h = (x * 374761393 + y * 668265263) | 0;
-    h = (h ^ (h >>> 13)) * 1274126177;
-    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
-  }
-  const smooth = t => t * t * (3 - 2 * t);
-  function noise(x, y) {
-    const xi = Math.floor(x), yi = Math.floor(y);
-    const xf = smooth(x - xi), yf = smooth(y - yi);
-    const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
-    return a + (b - a) * xf + (c - a) * yf + (a - b - c + d) * xf * yf;
-  }
-  function field(x, y) {
-    return 0.62 * noise(x * 0.0021 + 7, y * 0.0021 + 3)
-         + 0.28 * noise(x * 0.0049 + 19, y * 0.0049 + 11)
-         + 0.10 * noise(x * 0.011 + 31, y * 0.011 + 23);
-  }
-
-  function draw() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = window.innerWidth, h = window.innerHeight;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const css = getComputedStyle(document.documentElement);
-    const bg = css.getPropertyValue('--bg').trim();
-    const dotSoft = css.getPropertyValue('--line').trim();
-    const dotStrong = css.getPropertyValue('--ink-3').trim();
-
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.globalAlpha = 1;
-    const phone = w < 769;
-    const step = phone ? 12 : 14;
-    const fade = phone ? 0.55 : 1;   // quieter behind phone text, which sits straight on the wallpaper
-    const levels = 9;
-    for (let y = step / 2; y < h; y += step) {
-      for (let x = step / 2; x < w; x += step) {
-        const v = field(x, y) * levels;
-        const band = v - Math.floor(v);              // 0..1 inside a band
-        const edge = Math.abs(band - 0.5) * 2;       // 1 on the band edge, 0 mid-band
-        const near = Math.pow(edge, 5);              // sharp falloff away from the contour
-        const r = 0.55 + near * 1.9;
-        const strong = near > 0.35;
-        ctx.globalAlpha = (strong ? 0.5 : 1) * fade;
-        ctx.fillStyle = strong ? dotStrong : dotSoft;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, 6.2832);
-        ctx.fill();
-      }
-    }
-  }
-
-  let timer = 0;
-  const redraw = () => { cancelAnimationFrame(timer); timer = requestAnimationFrame(draw); };
-
-  draw();
-  window.addEventListener('resize', () => { clearTimeout(redraw.t); redraw.t = setTimeout(redraw, 120); });
-  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
-})();
 /* ================================================================
    wallpaper.js
-   A dot-matrix halftone of a made-up landscape. The dot grid is the
-   OLED pixel grid; the dots swell along contour bands, so it reads
-   as a topographic map. Greys only, read from the theme tokens, so it
-   follows light and dark. Static: drawn once per resize or theme change.
+   Big glossy Gumdrop bubbles (ink outline, flat tone fill, a soft white
+   highlight) crowding the edges of the screen, cropped, behind the
+   windows. Decorative only. The page ground itself is a CSS gradient.
+   Positions are fixed fractions of the viewport, so the picture is the
+   same every visit. Drawn once per resize or theme change.
+================================================================ */
 (function () {
   const canvas = document.getElementById('wallpaper');
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
 
-  /* Deterministic value noise, so the picture is the same every visit. */
-  function hash(x, y) {
-    let h = (x * 374761393 + y * 668265263) | 0;
-    h = (h ^ (h >>> 13)) * 1274126177;
-    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
-  }
-  const smooth = t => t * t * (3 - 2 * t);
-  function noise(x, y) {
-    const xi = Math.floor(x), yi = Math.floor(y);
-    const xf = smooth(x - xi), yf = smooth(y - yi);
-    const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
-    return a + (b - a) * xf + (c - a) * yf + (a - b - c + d) * xf * yf;
-  }
-  function field(x, y) {
-    return 0.62 * noise(x * 0.0021 + 7, y * 0.0021 + 3)
-         + 0.28 * noise(x * 0.0049 + 19, y * 0.0049 + 11)
-         + 0.10 * noise(x * 0.011 + 31, y * 0.011 + 23);
+  /* x, y as a fraction of the screen; r as a fraction of the shorter side. */
+  const BUBBLES = [
+    { x: 0.97, y: 0.10, r: 0.15, tone: '--orange' },
+    { x: 0.02, y: 0.80, r: 0.18, tone: '--teal' },
+    { x: 0.90, y: 1.01, r: 0.13, tone: '--yellow' },
+    { x: 0.56, y: -0.03, r: 0.07, tone: '--violet' },
+    { x: 0.33, y: 1.04, r: 0.08, tone: '--lime' },
+    { x: 0.14, y: 0.30, r: 0.05, tone: '--yellow' },
+    { x: 0.80, y: 0.58, r: 0.045, tone: '--teal' },
+  ];
+
+  function bubble(x, y, r, fill, ink, lw) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.lineWidth = lw;
+    ctx.strokeStyle = ink;
+    ctx.stroke();
+    /* highlight: ~34% wide x 22% tall, white at ~70%, left 18% / top 14%, tilted -25deg */
+    const d = r * 2;
+    ctx.save();
+    ctx.translate(x - r + d * (0.18 + 0.17), y - r + d * (0.14 + 0.11));
+    ctx.rotate(-25 * Math.PI / 180);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, d * 0.17, d * 0.11, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fill();
+    ctx.restore();
   }
 
   function draw() {
@@ -103,35 +48,17 @@
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
 
     const css = getComputedStyle(document.documentElement);
-    const bg = css.getPropertyValue('--bg').trim();
-    const dotSoft = css.getPropertyValue('--line').trim();
-    const dotStrong = css.getPropertyValue('--ink-3').trim();
-
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.globalAlpha = 1;
+    const ink = css.getPropertyValue('--ink').trim() || '#0a0030';
+    const side = Math.min(w, h);
     const phone = w < 769;
-    const step = phone ? 12 : 14;
-    const fade = phone ? 0.55 : 1;   // quieter behind phone text, which sits straight on the wallpaper
-    const levels = 9;
-    for (let y = step / 2; y < h; y += step) {
-      for (let x = step / 2; x < w; x += step) {
-        const v = field(x, y) * levels;
-        const band = v - Math.floor(v);              // 0..1 inside a band
-        const edge = Math.abs(band - 0.5) * 2;       // 1 on the band edge, 0 mid-band
-        const near = Math.pow(edge, 5);              // sharp falloff away from the contour
-        const r = 0.55 + near * 1.9;
-        const strong = near > 0.35;
-        ctx.globalAlpha = (strong ? 0.5 : 1) * fade;
-        ctx.fillStyle = strong ? dotStrong : dotSoft;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, 6.2832);
-        ctx.fill();
-      }
-    }
+
+    BUBBLES.forEach(b => {
+      const r = Math.max(26, b.r * side * (phone ? 1.15 : 1.4));
+      bubble(b.x * w, b.y * h, r, css.getPropertyValue(b.tone).trim(), ink, 5);
+    });
   }
 
   let timer = 0;
@@ -140,5 +67,5 @@
   draw();
   window.addEventListener('resize', () => { clearTimeout(redraw.t); redraw.t = setTimeout(redraw, 120); });
   window.addEventListener('themechange', redraw);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(redraw);
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw);
 })();

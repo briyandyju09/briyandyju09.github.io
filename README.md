@@ -7,8 +7,9 @@
 - **Frontend:** hand-written HTML, CSS, and vanilla JavaScript (no framework, no build step)
 - **Map:** [Leaflet](https://leafletjs.com/) 1.9.4 + Esri grey canvas tiles
 - **Data:** [Open-Meteo](https://open-meteo.com/) (weather), [GitHub REST API](https://docs.github.com/en/rest) (projects), Spotify embed
-- **Fonts:** Instrument Serif, Geist & Geist Mono (Google Fonts)
-- **Colours:** greys only, from `tokens.css` (light and dark, follows the OS)
+- **Design:** the Gumdrop design language: cream cards with thick ink outlines and hard offset shadows, glossy bubbles, one lime action colour, a yellow marker on one headline phrase, everything leaning a little off-kilter
+- **Fonts:** Bricolage Grotesque and Space Grotesk, bundled in `fonts/` (no Google Fonts request)
+- **Colours:** Day and Night tokens in `tokens.css` (follows the OS)
 - **Hosting:** GitHub Pages with a custom domain (`CNAME` → briyan.xyz)
 
 ## Description
@@ -28,7 +29,7 @@ near-full-screen slot instead of being draggable.
 - **Spotify embed** — current playlist rotation.
 - **Live weather widget** — current Dubai conditions from Open-Meteo.
 - **Lo-fi player** — a widget that invents its own soft lo-fi in the browser (`music.js`, Web Audio, nothing to download), with a random title for every track. It starts on the first tap or click if the browser blocks autoplay.
-- **Dock on phones** — below 768px the site opens to an empty desktop with a dock at the bottom; tap an app to open it, drag windows by their title bar.
+- **Dock on phones** — below 768px the site opens to an empty desktop with a dock at the bottom (a lime tile marks an open app); tap an app to open it, drag windows by their title bar.
 
 ## How to Build / Run
 
@@ -48,8 +49,9 @@ Pages to the domain in `CNAME`.
 - **Blog posts:** edit `blogs.js` (`BLOG_POSTS`).
 - **Places on the map:** edit `PLACES_IVE_BEEN` in `script.js`.
 - **Projects:** nothing to edit — it pulls straight from `GITHUB_USERNAME`'s public repos in `script.js`. To hide a repo from the list, add its name to `PROJECTS_EXCLUDE`.
-- **Icons:** a monochrome SVG sprite in `index.html` (classes `.ic`, `.ic-s`, `.ic-h` in `style.css`).
-- **Wallpaper:** generated in `wallpaper.js` (a dot-matrix contour pattern on a canvas that follows the light/dark colours). Tweak the numbers there for a different landscape.
+- **Icons:** an SVG sprite in `index.html`, drawn as round-capped ink outlines with one yellow accent (classes `.ic`, `.ic-f`, `.ic-h` in `style.css`).
+- **Wallpaper:** the page ground is a CSS gradient; `wallpaper.js` paints the big glossy bubbles at the screen edges onto a canvas. Edit the `BUBBLES` list there to move or recolour them.
+- **Colours, type and spacing:** all Gumdrop tokens live in `tokens.css`; components are in `style.css`.
 - **Share card:** replace `og.png` (1200 x 630).
 
 ### Vision board (`/vision`)
