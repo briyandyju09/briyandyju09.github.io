@@ -1,0 +1,12 @@
+@font-face { font-family: "Bricolage Grotesque"; src: url("../fonts/bricolage-latin.woff2") format("woff2"); font-weight: 400 800; font-stretch: 75% 100%; font-display: swap; }
+@font-face { font-family: "Space Grotesk"; src: url("../fonts/spacegrotesk-latin.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "Caveat"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("../fonts/caveat-400-700.woff2") format("woff2"); }
+@font-face { font-family: "Courier Prime"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/courier-prime-400.woff2") format("woff2"); }
+@font-face { font-family: "Courier Prime"; font-style: normal; font-weight: 700; font-display: swap; src: url("../fonts/courier-prime-700.woff2") format("woff2"); }
+@font-face { font-family: "Homemade Apple"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/homemade-apple-400.woff2") format("woff2"); }
+@font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap; src: url("../fonts/instrument-serif-italic-400.woff2") format("woff2"); }
+@font-face { font-family: "Instrument Serif"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/instrument-serif-400.woff2") format("woff2"); }
+@font-face { font-family: "Old Standard TT"; font-style: italic; font-weight: 400; font-display: swap; src: url("../fonts/old-standard-tt-italic-400.woff2") format("woff2"); }
+@font-face { font-family: "Old Standard TT"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/old-standard-tt-400.woff2") format("woff2"); }
+@font-face { font-family: "Old Standard TT"; font-style: normal; font-weight: 700; font-display: swap; src: url("../fonts/old-standard-tt-700.woff2") format("woff2"); }
+@font-face { font-family: "Special Elite"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/special-elite-400.woff2") format("woff2"); }

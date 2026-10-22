@@ -51,3 +51,14 @@ Pages to the domain in `CNAME`.
 - **Icons:** a monochrome SVG sprite in `index.html` (classes `.ic`, `.ic-s`, `.ic-h` in `style.css`).
 - **Wallpaper:** generated in `wallpaper.js` (a dot-matrix contour pattern on a canvas that follows the light/dark colours). Tweak the numbers there for a different landscape.
 - **Share card:** replace `og.png` (1200 x 630).
+
+### Vision Board Studio (`/vision`)
+
+An interactive digital scrapbook at [briyan.xyz/vision](https://briyan.xyz/vision/). Pin photos, polaroids, notes, stickers, tape and pins on textured paper, connect goals with red string, attach goals and milestones to objects, and export the board as PNG, JPEG, PDF or a wallpaper.
+
+- **Look:** the editor uses the Gumdrop design language (same as `/plan`: cream cards, ink outlines, hard shadows, lime action colour). The board itself is the scrapbook: paper grain, torn edges, washi tape, pushpins, red thread. It shares no CSS with the main site.
+- **Stack:** static files in `vision/` (`index.html`, `css/`, `js/`, `fonts/`), plain scripts, no build step. The board is rendered as SVG, and the same markup is used for the canvas, thumbnails and export.
+- **Saving:** boards and pictures are stored in the browser (IndexedDB), on that device only. Back up a board to a `.json` file from the `...` menu and restore it anywhere. Nothing is uploaded.
+- **Pictures:** upload, drop, paste, add by URL, or search Wikimedia Commons (open licences, credit saved on the photo). The built-in sample art is generated in the browser.
+- **Edit content:** starter boards live in `vision/js/templates.js`, stickers in `vision/js/stickers.js`, mood presets in `vision/js/state.js`.
+- **Shortcuts:** `v` select, `h` hand, `t` red thread, space to pan, ctrl+wheel to zoom, ctrl+z / ctrl+y, ctrl+d, ctrl+g, arrows to nudge, `[` `]` to rotate, delete.

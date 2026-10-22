@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Vision Board Studio</title>
+<meta name="description" content="An interactive digital scrapbook: pin photos, polaroids, notes and stickers on textured paper, connect goals with red string, and export a wallpaper.">
+<meta name="theme-color" content="#f3effd">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="Vision Board Studio">
+<meta property="og:description" content="A scrapbook vision board with red threads, polaroids and stickers.">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/bricolage-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/spacegrotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<a class="skip" href="#stagewrap">skip to the board</a>
+
+<div id="view-dash" class="dash" hidden></div>
+
+<div id="view-editor" class="editor" hidden>
+  <div id="toolbar" class="toolbar" role="toolbar" aria-label="board tools"></div>
+  <aside id="left" class="left" aria-label="tool panel">
+    <nav id="rail" class="rail" role="tablist" aria-label="tool categories" aria-orientation="vertical"></nav>
+    <section id="panel" class="panel"></section>
+  </aside>
+  <main id="stagewrap" class="stagewrap" tabindex="-1" aria-label="the vision board canvas. drag to move, arrow keys nudge the selected object">
+    <div class="stagebubs" aria-hidden="true"><i class="bub s1"></i><i class="bub s2"></i></div>
+    <svg id="stage" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="board objects"></svg>
+    <svg id="overlay" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+    <div id="ctxbar" class="ctxbar" role="toolbar" aria-label="selected object" hidden></div>
+    <div id="toolpill" class="toolpill" role="toolbar" aria-label="canvas tools"></div>
+    <div id="emptyhint" class="emptyhint" hidden>
+      <p class="shout-md">a blank sheet of paper</p>
+      <p>drop pictures anywhere, paste from the clipboard, or pick something from the panel on the left.</p>
+      <div class="row center">
+        <button class="btn sm" type="button" onclick="VB.ui.setTab('photos')">find photos</button>
+        <button class="btn sm cream" type="button" onclick="VB.ui.setTab('templates')">use a template</button>
+      </div>
+    </div>
+  </main>
+  <aside id="right" class="right" aria-label="details"></aside>
+</div>
+
+<div id="modal-root"></div>
+<p id="toast" class="toast" role="status" aria-live="polite"></p>
+<input type="file" id="filepick" accept="image/*" multiple hidden>
+<noscript><p style="padding:2rem">Vision Board Studio needs JavaScript to run.</p></noscript>
+
+<script src="js/fontlist.js"></script>
+<script src="js/util.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/stickers.js"></script>
+<script src="js/store.js"></script>
+<script src="js/render.js"></script>
+<script src="js/state.js"></script>
+<script src="js/samples.js"></script>
+<script src="js/templates.js"></script>
+<script src="js/interact.js"></script>
+<script src="js/export.js"></script>
+<script src="js/ui-core.js"></script>
+<script src="js/ui-inspector.js"></script>
+<script src="js/ui-dialogs.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
