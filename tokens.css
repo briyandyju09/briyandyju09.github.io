@@ -1,115 +1,56 @@
-/* SwiftPad brand tokens. Drop-in: link this file, set fonts (see 03-typography.md), done.
-   Source of truth: app/src/styles.css. Light is the default; dark via [data-theme="dark"]
-   or the OS preference unless [data-theme="light"] is set. */
+/* Gumdrop design tokens. Day is the default; Night follows the OS unless the
+   page sets data-theme. Cards and fills are identical in both themes: only the
+   ground and the text sitting straight on it change.
+   Fonts (Bricolage Grotesque, Space Grotesk, both SIL OFL) are bundled in ./fonts. */
 
-:root {
-  /* ---- neutrals: no hue, ever -------------------------------------------- */
-  --bg: #f2f2f2; /* the desk */
-  --panel: #e7e7e7; /* the pad's plate, cards, hover fill */
-  --raise: #fbfbfb; /* keycaps, inputs, buttons: the brightest surface */
-  --line: #d3d3d3; /* borders that matter */
-  --line-soft: #dedede; /* dividers, sidebar edge */
-  --ink: #0f0f0f; /* text, selection, the one "accent" */
-  --ink-2: #4f4f4f; /* secondary text */
-  --ink-3: #8b8b8b; /* tertiary: hints, labels, idle icons */
-  --on-ink: #f4f4f4; /* text on an --ink fill */
-  --edge: #c4c4c4; /* the thickness of a keycap */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("fonts/bricolage-latin.woff2") format("woff2");
+  font-weight: 400 800; font-stretch: 75% 100%; font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("fonts/spacegrotesk-latin.woff2") format("woff2");
+  font-weight: 300 700; font-display: swap;
+}
 
-  /* ---- the screen: the only place pixels are "lit" ------------------------ */
-  --glass: #050505;
-  --glass-off: #0e0e0e;
-  --lit: #f3f3f3;
-
-  /* ---- type ---------------------------------------------------------------- */
-  --display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
-  --sans: "Geist Variable", "Segoe UI", system-ui, sans-serif;
-  --mono: "Geist Mono Variable", ui-monospace, "Cascadia Mono", Consolas, monospace;
-
-  /* ---- shape ----------------------------------------------------------------- */
-  --r-key: 14px; /* keycaps */
-  --r-ctl: 8px; /* buttons, inputs, rows, menus */
-  --r-card: 18px; /* cards */
-  --r-plate: 32px; /* the hero object */
-  --r-pill: 999px; /* chips, pills, switches */
-
-  /* ---- motion ---------------------------------------------------------------- */
-  --t-press: 70ms ease-out; /* a key going down */
-  --t-switch: 120ms ease-out;
-  --t-sheet: 160ms ease-out;
-
+:root, [data-theme="light"] {
+  --ground: #f3effd; --ground-deep: #e0d4fb;
+  --surface: #f5ffcf; --surface-white: #fefbff;
+  --ink: #0a0030; --ink-muted: #5a4c82;
+  --text: #24085c; --text-muted: #5a4c82;
+  --lime: #cfff00; --yellow: #ffd000; --orange: #e0632b; --teal: #3daab8; --violet: #9457eb;
+  --focus: #9457eb;
+  --shadow-pop: 4px 4px 0 #0a0030;
+  --shadow-pop-lg: 6px 6px 0 #0a0030;
+  --shadow-soft: 0 12px 32px #24085c33;
   color-scheme: light;
 }
-
-:root[data-theme="dark"] {
-  --bg: #0c0c0c;
-  --panel: #161616;
-  --raise: #1d1d1d;
-  --line: #2c2c2c;
-  --line-soft: #232323;
-  --ink: #efefef;
-  --ink-2: #aaaaaa;
-  --ink-3: #707070;
-  --on-ink: #0c0c0c;
-  --edge: #090909;
-  --glass: #000;
-  --glass-off: #0b0b0b;
+[data-theme="dark"] {
+  --ground: #120637; --ground-deep: #1f1060;
+  --text: #f3effd; --text-muted: #cbbff2;
+  --shadow-pop: 4px 4px 0 #9457eb;
+  --shadow-pop-lg: 6px 6px 0 #9457eb;
+  --shadow-soft: 0 12px 32px #00000066;
   color-scheme: dark;
 }
-
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0c0c0c;
-    --panel: #161616;
-    --raise: #1d1d1d;
-    --line: #2c2c2c;
-    --line-soft: #232323;
-    --ink: #efefef;
-    --ink-2: #aaaaaa;
-    --ink-3: #707070;
-    --on-ink: #0c0c0c;
-    --edge: #090909;
-    --glass: #000;
-    --glass-off: #0b0b0b;
+    --ground: #120637; --ground-deep: #1f1060;
+    --text: #f3effd; --text-muted: #cbbff2;
+    --shadow-pop: 4px 4px 0 #9457eb;
+    --shadow-pop-lg: 6px 6px 0 #9457eb;
+    --shadow-soft: 0 12px 32px #00000066;
     color-scheme: dark;
   }
 }
 
-/* ---- base ------------------------------------------------------------------ */
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font: 400 13.5px/1.45 var(--sans);
-  font-feature-settings: "ss01", "cv11";
-  -webkit-font-smoothing: antialiased;
-}
-input,
-textarea,
-select,
-button {
-  font: inherit;
-  color: inherit;
-}
-button {
-  cursor: pointer;
-}
-:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-::selection {
-  background: var(--ink);
-  color: var(--on-ink);
-}
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
+:root {
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px;
+  --radius-sm: 12px; --radius-md: 20px; --radius-lg: 28px; --radius-pill: 999px;
+  --stroke-sm: 2px; --stroke-md: 3px; --stroke-lg: 5px;
+  --tilt-1: -1.5deg; --tilt-2: 2deg; --tilt-3: -3deg;
+  --font-display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
 }

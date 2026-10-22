@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Briyan Archive ✦</title>
+  <title>The Briyan Archive</title>
   <meta property="og:type" content="website" />
   <meta property="og:title" content="The Briyan Archive" />
   <meta property="og:description" content="Projects, travel, writing and music." />
   <meta property="og:url" content="https://briyan.xyz/" />
   <meta property="og:image" content="https://briyan.xyz/og.png" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="theme-color" content="#f3effd" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#120637" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400..600&family=Geist:wght@400..600&family=Instrument+Serif&display=swap" rel="stylesheet" />
+  <link rel="preload" href="fonts/bricolage-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/spacegrotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
@@ -25,7 +27,7 @@
 
   <canvas id="wallpaper" aria-hidden="true"></canvas>
 
-  <!-- Icon set: monochrome, with a hard offset shadow and hatching. Styled in style.css (.ic). -->
+  <!-- Icon set: round-capped ink outlines with one yellow accent. Styled in style.css (.ic). -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <defs>
 <pattern id="ic-hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0v3" style="stroke:var(--ink);stroke-width:.8;opacity:.5"/></pattern>
@@ -54,8 +56,8 @@
   </svg>
 
   <header id="topbar">
-    <span id="topbar-brand">✦ The Briyan Archive</span>
-    <span id="topbar-tagline">stay curious ✧</span>
+    <span id="topbar-brand"><span class="brand-bubble" aria-hidden="true"></span>The Briyan Archive</span>
+    <span id="topbar-tagline" class="chip">stay curious</span>
     <span id="topbar-clock"></span>
   </header>
 
@@ -64,35 +66,35 @@
     <!-- ── DESKTOP ICONS ──────────────────────────────────────── -->
     <div id="icon-column">
 
-      <div class="desktop-icon" data-app="home" id="icon-home" title="Home">
-        <div class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-home"/></svg></div>
+      <button class="desktop-icon" type="button" data-app="home" id="icon-home" title="Home">
+        <span class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-home"/></svg></span>
         <span>Home</span>
-      </div>
+      </button>
 
-      <div class="desktop-icon" data-app="about" id="icon-about" title="About Me">
-        <div class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-about"/></svg></div>
+      <button class="desktop-icon" type="button" data-app="about" id="icon-about" title="About Me">
+        <span class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-about"/></svg></span>
         <span>About Me</span>
-      </div>
+      </button>
 
-      <div class="desktop-icon" data-app="spotify" id="icon-spotify" title="Spotify">
-        <div class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-music"/></svg></div>
+      <button class="desktop-icon" type="button" data-app="spotify" id="icon-spotify" title="Spotify">
+        <span class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-music"/></svg></span>
         <span>Spotify</span>
-      </div>
+      </button>
 
-      <div class="desktop-icon" data-app="map" id="icon-map" title="My Map">
-        <div class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-map"/></svg></div>
+      <button class="desktop-icon" type="button" data-app="map" id="icon-map" title="My Map">
+        <span class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-map"/></svg></span>
         <span>My Map</span>
-      </div>
+      </button>
 
-      <div class="desktop-icon" data-app="blog" id="icon-blog" title="Blog">
-        <div class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-blog"/></svg></div>
+      <button class="desktop-icon" type="button" data-app="blog" id="icon-blog" title="Blog">
+        <span class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-blog"/></svg></span>
         <span>Blog</span>
-      </div>
+      </button>
 
-      <div class="desktop-icon" data-app="projects" id="icon-projects" title="Projects">
-        <div class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-projects"/></svg></div>
+      <button class="desktop-icon" type="button" data-app="projects" id="icon-projects" title="Projects">
+        <span class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-projects"/></svg></span>
         <span>Projects</span>
-      </div>
+      </button>
 
     </div>
 
@@ -103,49 +105,49 @@
     <div class="window" id="win-home">
       <div class="window-titlebar">
         <div class="titlebar-dots">
-          <span class="dot dot-close"></span>
-          <span class="dot dot-min"></span>
-          <span class="dot dot-max"></span>
+          <button class="dot dot-close" type="button" aria-label="close window"></button>
+          <span class="dot dot-min" aria-hidden="true"></span>
+          <span class="dot dot-max" aria-hidden="true"></span>
         </div>
-        <span class="window-title">✦ Home ✦</span>
+        <span class="window-title">Home</span>
       </div>
       <div class="window-body">
-        <h1 class="welcome-heading">Welcome ✦</h1>
+        <h1 class="welcome-heading">Welcome to <span class="marker">the archive</span></h1>
         <p class="welcome-sub">briyan's section on the internet for braindumps</p>
 
         <div class="home-marquee-wrap">
           <div class="home-marquee">
-            <span>✦ music</span><span>✧ app development </span><span>✦ coding</span><span>✧ travel</span><span>✦ photography</span><span>✧ archive 4 tams</span>
-            <span>✦ music</span><span>✧ app development</span><span>✦ coding</span><span>✧ travel</span><span>✦ photography</span><span>✧ archive 4 tams</span>
+            <span>music</span><span>app development</span><span>coding</span><span>travel</span><span>photography</span><span>archive 4 tams</span>
+            <span>music</span><span>app development</span><span>coding</span><span>travel</span><span>photography</span><span>archive 4 tams</span>
           </div>
         </div>
 
         <div class="home-grid">
           <button class="home-card" data-app="about">
-            <div class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-about"/></svg></div>
+            <span class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-about"/></svg></span>
             <span>About Me</span>
           </button>
           <button class="home-card" data-app="map">
-            <div class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-map"/></svg></div>
+            <span class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-map"/></svg></span>
             <span>My Travel Map</span>
           </button>
           <button class="home-card" data-app="spotify">
-            <div class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-music"/></svg></div>
+            <span class="icon-graphic"><svg class="ic" aria-hidden="true"><use href="#ic-music"/></svg></span>
             <span>Spotify</span>
           </button>
         </div>
 
-        <p class="home-section-label">✧ currently</p>
+        <p class="home-section-label">currently</p>
         <div class="home-now-row">
           <div class="home-now-dot"></div>
           <div class="home-now-text">
-            <strong>listening to</strong> — whatever my mood is<br>
-            <strong>developing</strong> — this website and other sidequests
+            <strong>listening to</strong> whatever my mood is<br>
+            <strong>developing</strong> this website and other sidequests
           </div>
         </div>
 
         <div class="home-footer-row">
-          <span class="home-footer-hint">✧ click on any of the suggested apps! ✧</span>
+          <span class="home-footer-hint">tap any app to open it!</span>
           <span class="tag">The Briyan Archive</span>
         </div>
       </div>
@@ -156,24 +158,24 @@
     <div class="window" id="win-about" data-title="About Me">
       <div class="window-titlebar">
         <div class="titlebar-dots">
-          <span class="dot dot-close"></span>
-          <span class="dot dot-min"></span>
-          <span class="dot dot-max"></span>
+          <button class="dot dot-close" type="button" aria-label="close window"></button>
+          <span class="dot dot-min" aria-hidden="true"></span>
+          <span class="dot dot-max" aria-hidden="true"></span>
         </div>
         <span class="window-title">About Me</span>
       </div>
       <div class="window-body about-body">
         <div class="about-avatar"><svg class="ic" aria-hidden="true"><use href="#ic-telescope"/></svg></div>
-        <h2 class="about-name">Briyan Dyju ✦</h2>
+        <h2 class="about-name">Briyan Dyju</h2>
         <p class="about-role">Student · Developer · HCB staff</p>
         <div class="about-divider"></div>
         <p class="about-bio">Hey! I'm Briyan, a student and teen developer who loves making random projects and trying new stuff. I make things I don’t fully understand yet but that’s the point.</p>
         <div class="about-tags">
-          <span class="tag">✦ coding</span>
-          <span class="tag">✧ app dev</span>
-          <span class="tag">✦ music</span>
-          <span class="tag">✧ photography</span>
-          <span class="tag">✦ travelling</span>
+          <span class="tag">coding</span>
+          <span class="tag">app dev</span>
+          <span class="tag">music</span>
+          <span class="tag">photography</span>
+          <span class="tag">travelling</span>
         </div>
       </div>
     </div>
@@ -183,14 +185,14 @@
     <div class="window" id="win-spotify" data-title="Spotify">
       <div class="window-titlebar">
         <div class="titlebar-dots">
-          <span class="dot dot-close"></span>
-          <span class="dot dot-min"></span>
-          <span class="dot dot-max"></span>
+          <button class="dot dot-close" type="button" aria-label="close window"></button>
+          <span class="dot dot-min" aria-hidden="true"></span>
+          <span class="dot dot-max" aria-hidden="true"></span>
         </div>
-        <span class="window-title">Spotify ✧</span>
+        <span class="window-title">Spotify</span>
       </div>
       <div class="window-body spotify-body">
-        <p class="spotify-label">✦ current rotation</p>
+        <p class="spotify-label">current rotation</p>
         <iframe
           id="spotify-iframe"
           src="https://open.spotify.com/embed/playlist/0jeoT6G9TZygckjrnYDD3g?utm_source=generator&si=64935acd87214b13"
@@ -201,7 +203,7 @@
           loading="lazy"
           allowfullscreen>
         </iframe>
-        <p class="spotify-hint">✧ My top go-to tracks.</p>
+        <p class="spotify-hint">my top go-to tracks.</p>
       </div>
     </div>
 
@@ -210,14 +212,14 @@
     <div class="window" id="win-map" data-title="My Map">
       <div class="window-titlebar">
         <div class="titlebar-dots">
-          <span class="dot dot-close"></span>
-          <span class="dot dot-min"></span>
-          <span class="dot dot-max"></span>
+          <button class="dot dot-close" type="button" aria-label="close window"></button>
+          <span class="dot dot-min" aria-hidden="true"></span>
+          <span class="dot dot-max" aria-hidden="true"></span>
         </div>
-        <span class="window-title">My Map ✦</span>
+        <span class="window-title">My Map</span>
       </div>
       <div class="window-body map-body">
-        <p class="map-label">✧ places i've been</p>
+        <p class="map-label">places i've been</p>
         <div id="leaflet-map"></div>
       </div>
     </div>
@@ -226,15 +228,15 @@
     <div class="window" id="win-blog">
       <div class="window-titlebar">
         <div class="titlebar-dots">
-          <span class="dot dot-close"></span>
-          <span class="dot dot-min"></span>
-          <span class="dot dot-max"></span>
+          <button class="dot dot-close" type="button" aria-label="close window"></button>
+          <span class="dot dot-min" aria-hidden="true"></span>
+          <span class="dot dot-max" aria-hidden="true"></span>
         </div>
-        <span class="window-title">✦ Blog ✦</span>
+        <span class="window-title">Blog</span>
       </div>
       <div class="window-body blog-list-body">
         <div class="blog-list-header">
-          <h2 class="blog-list-title">The Archive ✦</h2>
+          <h2 class="blog-list-title">The <span class="marker">archive</span></h2>
           <p class="blog-list-sub">thoughts, travels &amp; in-betweens</p>
         </div>
         <div id="blog-entries">
@@ -247,11 +249,11 @@
     <div class="window" id="win-blog-post">
       <div class="window-titlebar">
         <div class="titlebar-dots">
-          <span class="dot dot-close"></span>
-          <span class="dot dot-min"></span>
-          <span class="dot dot-max"></span>
+          <button class="dot dot-close" type="button" aria-label="close window"></button>
+          <span class="dot dot-min" aria-hidden="true"></span>
+          <span class="dot dot-max" aria-hidden="true"></span>
         </div>
-        <span class="window-title" id="blog-post-win-title">✧ post ✧</span>
+        <span class="window-title" id="blog-post-win-title">Post</span>
       </div>
       <div class="window-body blog-post-body" id="blog-post-body">
       </div>
@@ -262,15 +264,15 @@
     <div class="window" id="win-projects">
       <div class="window-titlebar">
         <div class="titlebar-dots">
-          <span class="dot dot-close"></span>
-          <span class="dot dot-min"></span>
-          <span class="dot dot-max"></span>
+          <button class="dot dot-close" type="button" aria-label="close window"></button>
+          <span class="dot dot-min" aria-hidden="true"></span>
+          <span class="dot dot-max" aria-hidden="true"></span>
         </div>
-        <span class="window-title">✦ Projects ✦</span>
+        <span class="window-title">Projects</span>
       </div>
       <div class="window-body projects-body">
         <div class="blog-list-header">
-          <h2 class="blog-list-title">Projects ✦</h2>
+          <h2 class="blog-list-title">Things i <span class="marker">built</span></h2>
           <p class="blog-list-sub">pulled live from github.com/briyandyju09</p>
         </div>
         <div id="projects-list">
@@ -283,11 +285,11 @@
     <div class="window widget" id="win-weather">
       <div class="window-titlebar">
         <div class="titlebar-dots">
-          <span class="dot dot-close"></span>
-          <span class="dot dot-min"></span>
-          <span class="dot dot-max"></span>
+          <button class="dot dot-close" type="button" aria-label="close window"></button>
+          <span class="dot dot-min" aria-hidden="true"></span>
+          <span class="dot dot-max" aria-hidden="true"></span>
         </div>
-        <span class="window-title">✦ Weather ✦</span>
+        <span class="window-title">Weather</span>
       </div>
       <div class="window-body widget-body" id="weather-body">
         <div class="widget-loading">fetching weather...</div>
@@ -299,11 +301,11 @@
     <div class="window widget" id="win-music">
       <div class="window-titlebar">
         <div class="titlebar-dots">
-          <span class="dot dot-close"></span>
-          <span class="dot dot-min"></span>
-          <span class="dot dot-max"></span>
+          <button class="dot dot-close" type="button" aria-label="close window"></button>
+          <span class="dot dot-min" aria-hidden="true"></span>
+          <span class="dot dot-max" aria-hidden="true"></span>
         </div>
-        <span class="window-title">✦ Lo-fi ✦</span>
+        <span class="window-title">Lo-fi</span>
       </div>
       <div class="window-body widget-body music-body">
         <div class="music-top">
