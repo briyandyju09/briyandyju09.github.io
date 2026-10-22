@@ -54,11 +54,13 @@ Pages to the domain in `CNAME`.
 - **Colours, type and spacing:** all Gumdrop tokens live in `tokens.css`; components are in `style.css`.
 - **Share card:** replace `og.png` (1200 x 630).
 
-### Vision board (`/vision`)
+### Vision Board Studio (`/vision`)
 
-A separate sub-site at [briyan.xyz/vision](https://briyan.xyz/vision/): a vision board drawn as a celestial atlas, with one constellation per ambition (boards, the Pearson scholarship, a prestigious company, a CS doctorate, a professorship) and one star per milestone. It has its own design and does not share `style.css` or `tokens.css`.
+An interactive digital scrapbook at [briyan.xyz/vision](https://briyan.xyz/vision/). Pin photos, polaroids, notes, stickers, tape and pins on textured paper, connect goals with red string, attach goals and milestones to objects, and export the board as PNG, JPEG, PDF or a wallpaper.
 
-- Static files in `vision/`: `index.html`, `vision.css`, `vision.js`, `data.js`. No build step.
-- **Edit the goals, milestones and quotes** in `vision/data.js`. Constellation shapes (`stars`, `edges`) live there too.
-- Progress, dates, notes and the letter are saved in the visitor's own browser (`localStorage`, key `vision.v1`). Nothing is sent anywhere, and the page is `noindex`.
-- Extras: daily observation log with streak, per-goal horizon dates with countdowns, a random "transmission" for a push, and a phone-wallpaper export of the current sky.
+- **Look:** the editor uses the Gumdrop design language (same as `/plan`: cream cards, ink outlines, hard shadows, lime action colour). The board itself is the scrapbook: paper grain, torn edges, washi tape, pushpins, red thread. It shares no CSS with the main site.
+- **Stack:** static files in `vision/` (`index.html`, `css/`, `js/`, `fonts/`), plain scripts, no build step. The board is rendered as SVG, and the same markup is used for the canvas, thumbnails and export.
+- **Saving:** boards and pictures are stored in the browser (IndexedDB), on that device only. Back up a board to a `.json` file from the `...` menu and restore it anywhere. Nothing is uploaded.
+- **Pictures:** upload, drop, paste, add by URL, or search Wikimedia Commons (open licences, credit saved on the photo). The built-in sample art is generated in the browser.
+- **Edit content:** starter boards live in `vision/js/templates.js`, stickers in `vision/js/stickers.js`, mood presets in `vision/js/state.js`.
+- **Shortcuts:** `v` select, `h` hand, `t` red thread, space to pan, ctrl+wheel to zoom, ctrl+z / ctrl+y, ctrl+d, ctrl+g, arrows to nudge, `[` `]` to rotate, delete.
