@@ -51,3 +51,12 @@ Pages to the domain in `CNAME`.
 - **Icons:** a monochrome SVG sprite in `index.html` (classes `.ic`, `.ic-s`, `.ic-h` in `style.css`).
 - **Wallpaper:** generated in `wallpaper.js` (a dot-matrix contour pattern on a canvas that follows the light/dark colours). Tweak the numbers there for a different landscape.
 - **Share card:** replace `og.png` (1200 x 630).
+
+### Vision board (`/vision`)
+
+A separate sub-site at [briyan.xyz/vision](https://briyan.xyz/vision/): a vision board drawn as a celestial atlas, with one constellation per ambition (boards, the Pearson scholarship, a prestigious company, a CS doctorate, a professorship) and one star per milestone. It has its own design and does not share `style.css` or `tokens.css`.
+
+- Static files in `vision/`: `index.html`, `vision.css`, `vision.js`, `data.js`. No build step.
+- **Edit the goals, milestones and quotes** in `vision/data.js`. Constellation shapes (`stars`, `edges`) live there too.
+- Progress, dates, notes and the letter are saved in the visitor's own browser (`localStorage`, key `vision.v1`). Nothing is sent anywhere, and the page is `noindex`.
+- Extras: daily observation log with streak, per-goal horizon dates with countdowns, a random "transmission" for a push, and a phone-wallpaper export of the current sky.
