@@ -1,0 +1,11 @@
+{
+  "name": "Plan: PT2 study list",
+  "short_name": "Plan",
+  "description": "Day-by-day study checklist with honest check-ins and focus tools.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3effd",
+  "theme_color": "#f3effd",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

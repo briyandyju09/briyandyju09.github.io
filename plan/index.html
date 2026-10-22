@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plan · Briyan's PT2 study list</title>
+<meta name="description" content="A day-by-day study checklist for PT2: one subject, one chapter at a time, with honest check-ins, progress recaps and focus tools.">
+<meta name="theme-color" content="#f3effd">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="Plan · PT2 study list">
+<meta property="og:description" content="Day-by-day chapters, honest check-ins, recaps and focus tools.">
+<meta property="og:type" content="website">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="fonts/bricolage-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="plan.css">
+<script>
+/* apply saved look before first paint so nothing flashes */
+try {
+  var s = (JSON.parse(localStorage.getItem("plan.v1") || "{}").settings) || {}, d = document.documentElement;
+  d.dataset.theme = s.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  if (s.large) d.dataset.large = "";
+  if (s.contrast) d.dataset.contrast = "";
+  if (s.calm === true || (s.calm == null && matchMedia("(prefers-reduced-motion: reduce)").matches)) d.dataset.calm = "";
+} catch (e) { document.documentElement.dataset.theme = "light"; }
+</script>
+</head>
+<body>
+<a class="skip" href="#main">skip to content</a>
+
+<div class="scenery" aria-hidden="true"><i class="gb gb-a"></i><i class="gb gb-b"></i><i class="gb gb-c"></i></div>
+
+<header class="top">
+  <a class="brand" href="#/today" aria-label="Plan, today">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="22" fill="#cfff00" stroke="#0a0030" stroke-width="5"/><path d="M20 33l8 8 17-18" fill="none" stroke="#0a0030" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="22" cy="21" rx="6" ry="3.5" fill="#fff" opacity=".75" transform="rotate(-25 22 21)"/></svg>
+    </span>
+    <span class="brand-name">plan</span>
+  </a>
+  <div class="tools" role="group" aria-label="Quick settings" id="tools"></div>
+</header>
+
+<nav class="menu" id="menu" aria-label="Main menu"></nav>
+
+<main id="main" tabindex="-1"><noscript><p class="noscript">This planner needs JavaScript to run. Nothing is sent anywhere: your ticks stay in your browser.</p></noscript></main>
+
+<footer class="foot">Your ticks, notes and timers live only in this browser. Use <b>tools → back up</b> to move them to another device. Made for PT2, Nov 16–27 2026.</footer>
+
+<div id="timer" hidden></div>
+<div id="float"></div>
+<div id="toasts" aria-live="polite" aria-atomic="true"></div>
+<dialog id="dlg" aria-labelledby="dlg-title"></dialog>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
