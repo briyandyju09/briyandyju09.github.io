@@ -10,7 +10,7 @@
   --shadow-c:   var(--ink);               /* colour of the hard shadows: ink by day, violet by night */
   --chip-shadow: 2px 2px 0 var(--shadow-c);
   --topbar-h:   52px;
-  --ease-pop:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-pop:   cubic-bezier(0.22, 1, 0.36, 1);
 }
 :root[data-theme="dark"] { --shadow-c: var(--violet); }
 @media (prefers-color-scheme: dark) {
