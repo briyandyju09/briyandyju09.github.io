@@ -32,7 +32,7 @@
 <main class="wrap" id="main">
   <section class="intro" aria-labelledby="hello">
     <h1 class="display" id="hello">Buzz <span class="marker">Briyan's pocket</span></h1>
-    <p class="lead">It lands on Riko, the little gadget in his pocket. Hack Club folks come through as work, everyone else as personal.</p>
+    <p class="lead">It lands on Riko, the little gadget in his pocket. Need help with Hack Club? Pick a topic. Just saying hi? Tick personal.</p>
     <p class="clock" id="clock" aria-live="off">
       <svg class="ico sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4v5l3.2 2"/></svg>
       <svg class="ico moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 14.6A7.8 7.8 0 0 1 9.4 4.6a7.9 7.9 0 1 0 10 10z"/></svg>
@@ -53,6 +53,31 @@
         <input id="name" name="name" type="text" autocomplete="name" autocapitalize="words" spellcheck="false" maxlength="40" required aria-describedby="route name-err">
         <p class="route-line" id="route" aria-live="polite">type your name and we'll show how it lands</p>
         <p class="err" id="name-err" hidden></p>
+      </div>
+
+      <label class="check" for="personal">
+        <input type="checkbox" id="personal" name="personal">
+        <span class="check-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5.5 12.5l4.2 4.2 8.8-9.4"/></svg></span>
+        <span class="check-text">personal, not HCB</span>
+      </label>
+
+      <div class="field" id="topic-field">
+        <label for="topic">what do you need help with at HCB?</label>
+        <div class="select">
+          <select id="topic" name="topic" required aria-describedby="topic-err">
+            <option value="">pick one</option>
+            <option value="card">Card or reimbursement</option>
+            <option value="invoice">Invoice or receipt</option>
+            <option value="transfer">Transfer, ACH or wire</option>
+            <option value="donations">Donations or fundraising</option>
+            <option value="grants">Grants</option>
+            <option value="setup">Account setup or onboarding</option>
+            <option value="applying">Applying for HCB</option>
+            <option value="other">Something else</option>
+          </select>
+          <svg class="ico caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg>
+        </div>
+        <p class="err" id="topic-err" hidden></p>
       </div>
 
       <div class="field">
@@ -128,7 +153,7 @@
 </main>
 
 <footer class="foot">
-  <p>No tracking here. Your name stays in this browser so you don't have to retype it. Pages travel through <a href="https://ntfy.sh" rel="noopener">ntfy.sh</a>, a public relay, so keep secrets out of them.</p>
+  <p>No tracking here. Your name stays in this browser so you don't have to retype it. HCB pages carry the topic you pick so Briyan knows what it's about. Pages travel through <a href="https://ntfy.sh" rel="noopener">ntfy.sh</a>, a public relay, so keep secrets out of them.</p>
   <p class="testing" id="testing" hidden></p>
 </footer>
 

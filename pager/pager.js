@@ -41,6 +41,7 @@
   function $(id) { return document.getElementById(id); }
   var compose = $("compose"), ticket = $("ticket");
   var nameEl = $("name"), msgEl = $("msg"), urgentEl = $("urgent");
+  var personalEl = $("personal"), topicEl = $("topic"), topicField = $("topic-field"), topicErr = $("topic-err");
   var routeStamp = $("route-stamp"), routeLine = $("route");
   var nameErr = $("name-err"), msgErr = $("msg-err");
   var countEl = $("count"), countSr = $("count-sr");
@@ -60,11 +61,17 @@
     p.forEach(function (n) { teamKeys[norm(n)] = 1; });
     teamKeys[norm(p[0].split(" ")[0])] = 1;
   });
-  function classify(name) {
-    var n = norm(name);
-    if (!n) return "none";
-    return teamKeys[n] ? "hcb" : "personal";
+  // Personal tick wins. Otherwise the page is an HCB request (the topic picker applies).
+  function isTeam(name) { return !!teamKeys[norm(name)]; }
+  function classify(name, personal) {
+    if (personal) return "personal";
+    return norm(name) ? "hcb" : "none";
   }
+  var TOPICS = {
+    card: "Card or reimbursement", invoice: "Invoice or receipt", transfer: "Transfer, ACH or wire",
+    donations: "Donations or fundraising", grants: "Grants", setup: "Account setup or onboarding",
+    applying: "Applying for HCB", other: "Something else"
+  };
   var KIND_STAMP = { none: "who's paging?", hcb: "hcb work", personal: "personal" };
 
   function clockTime(d) {
@@ -101,14 +108,14 @@
   /* ---------- route (work vs personal) ---------- */
   var lastKind = null;
   function paintRoute() {
-    var kind = classify(nameEl.value);
+    var kind = classify(nameEl.value, personalEl.checked);
     routeStamp.dataset.kind = kind;
     routeStamp.textContent = KIND_STAMP[kind];
     if (kind !== lastKind && lastKind !== null && kind !== "none" && !reduceMotion) {
       routeStamp.classList.remove("thunk"); void routeStamp.offsetWidth; routeStamp.classList.add("thunk");
     }
     lastKind = kind;
-    if (kind === "hcb") setText(routeLine, ["goes to Briyan as an ", ["b", "HCB work page"]]);
+    if (kind === "hcb") setText(routeLine, isTeam(nameEl.value) ? ["goes to Briyan as an ", ["b", "HCB work page"]] : ["goes to Briyan as an ", ["b", "HCB request"]]);
     else if (kind === "personal") setText(routeLine, ["goes to Briyan as a ", ["b", "personal page"]]);
     else routeLine.textContent = "type your name and we'll show how it lands";
   }
@@ -175,17 +182,17 @@
     sending = on;
     sendBtn.setAttribute("aria-busy", on ? "true" : "false");
     if (on) { sendBtn.setAttribute("aria-disabled", "true"); sendLabel.textContent = "sending"; }
-    nameEl.readOnly = on; msgEl.readOnly = on; urgentEl.disabled = on;
+    nameEl.readOnly = on; msgEl.readOnly = on; urgentEl.disabled = on; personalEl.disabled = on; topicEl.disabled = on;
     if (!on) paintLimit();
   }
 
-  function publish(name, message, urgent) {
+  function publish(name, message, urgent, tags) {
     var ctrl = typeof AbortController === "function" ? new AbortController() : null;
     var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 15000) : null;
     return fetch(NTFY + topic, {
       method: "POST",
       body: message,
-      headers: { "Title": headerSafe(name), "Priority": urgent ? "5" : "3", "Tags": "web" },
+      headers: { "Title": headerSafe(name), "Priority": urgent ? "5" : "3", "Tags": tags },
       cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer",
       signal: ctrl ? ctrl.signal : undefined
     }).then(function (res) {
@@ -210,21 +217,28 @@
     var message = msgEl.value.trim();
     fieldError(nameEl, nameErr, name ? "" : "add your name so Briyan knows who's paging.");
     fieldError(msgEl, msgErr, message ? "" : "write something first, even just “hi”.");
+    var needTopic = !personalEl.checked && !topicEl.value;
+    fieldError(topicEl, topicErr, needTopic ? "pick what you need help with, or tick personal." : "");
     if (!name) { nameEl.focus(); return; }
+    if (needTopic) { topicEl.focus(); return; }
     if (!message) { msgEl.focus(); return; }
     var s = waitLeft();
     if (s > 0) { showProblem("hang on, one page every 30 seconds. you can send again in " + s + "s.", "limit"); return; }
 
     showProblem(null);
     save(KEY_NAME, name);
-    var urgent = urgentEl.checked, kind = classify(name);
+    var urgent = urgentEl.checked, personal = personalEl.checked, kind = classify(name, personal);
+    var tkey = personal ? "" : topicEl.value, tlabel = TOPICS[tkey] || "";
+    var body = message.slice(0, MAX_LEN), tags = "web";
+    if (personal) tags += ",personal";
+    else { body = "[" + tlabel + "] " + body; tags += ",hcb-" + tkey; }
     setSending(true);
-    publish(name, message.slice(0, MAX_LEN), urgent).then(function (data) {
+    publish(name, body, urgent, tags).then(function (data) {
       var sentMs = Date.now();
       save(KEY_LAST, String(sentMs));
       var page = {
         topic: topic, id: String(data.id), time: Number(data.time) || Math.floor(sentMs / 1000),
-        name: name, message: message, urgent: urgent, kind: kind, sentMs: sentMs, state: "waiting"
+        name: name, message: message, urgent: urgent, kind: kind, topicLabel: tlabel, sentMs: sentMs, state: "waiting"
       };
       save(KEY_PENDING, JSON.stringify(page));
       // Pages sent from this browser in the last 10 minutes, so a name-only ack can't be credited to the wrong one.
@@ -248,6 +262,7 @@
     compose.hidden = true; ticket.hidden = false;
     tRoute.dataset.kind = page.kind; tRoute.textContent = KIND_STAMP[page.kind];
     var parts = ["from ", ["b", page.name], " · " + clockTime(new Date(page.sentMs))];
+    if (page.topicLabel) parts.push(" · " + page.topicLabel);
     if (page.urgent) parts.push(" · ", ["b", "urgent"]);
     setText(tMeta, parts);
     tMsg.textContent = page.message;
@@ -359,13 +374,16 @@
     current = null;
     save(KEY_PENDING, null);
     ticket.hidden = true; compose.hidden = false;
-    msgEl.value = ""; urgentEl.checked = false;
+    msgEl.value = ""; urgentEl.checked = false; topicEl.value = ""; fieldError(topicEl, topicErr, "");
     fieldError(msgEl, msgErr, ""); showProblem(null);
     paintCount(); paintLimit();
     msgEl.focus();
   });
 
   /* ---------- inputs ---------- */
+  function paintTopic() { topicField.hidden = personalEl.checked; paintRoute(); }
+  personalEl.addEventListener("change", function () { fieldError(topicEl, topicErr, ""); paintTopic(); });
+  topicEl.addEventListener("change", function () { if (topicEl.value) fieldError(topicEl, topicErr, ""); });
   nameEl.addEventListener("input", function () { paintRoute(); if (nameEl.value.trim()) fieldError(nameEl, nameErr, ""); });
   nameEl.addEventListener("change", function () { var n = nameEl.value.trim(); if (n) save(KEY_NAME, n); });
   msgEl.addEventListener("input", function () { paintCount(); if (msgEl.value.trim()) fieldError(msgEl, msgErr, ""); });
@@ -390,7 +408,7 @@
   /* ---------- boot ---------- */
   var saved = load(KEY_NAME);
   if (saved) nameEl.value = saved;
-  paintRoute(); paintCount(); paintClock(); paintLimit();
+  paintTopic(); paintCount(); paintClock(); paintLimit();
   setInterval(paintClock, 20000);
 
   if (testing) {
