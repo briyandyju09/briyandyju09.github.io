@@ -10,7 +10,7 @@
   var MAX_LEN = 280;
   var GAP_MS = 30 * 1000;          // one page per 30 s
   var WAIT_MS = 10 * 60 * 1000;    // give up waiting for "seen" after 10 min
-  var POLL_MS = 5000;
+  var POLL_FAST = 1500, POLL_SLOW = 5000, POLL_SSE = 10000, FAST_MS = 60 * 1000;   // watching for acks
   var DUBAI_OFFSET_H = 4;          // Dubai is UTC+4 all year
   var QUICK = ["got a minute?", "call me when free", "check slack"];
 
@@ -48,8 +48,11 @@
   var quietEl = $("quiet"), quietTime = $("quiet-time"), clockEl = $("clock"), clockText = $("clock-text");
   var problem = $("problem"), problemText = $("problem-text");
   var sendBtn = $("send"), sendLabel = $("send-label"), limitHint = $("limit-hint");
-  var tRoute = $("t-route"), tMeta = $("t-meta"), tMsg = $("t-msg"), track = $("track");
-  var stopSeen = $("stop-seen"), sentAt = $("sent-at"), seenAt = $("seen-at");
+  var tRoute = $("t-route"), tMeta = $("t-meta"), tMsg = $("t-msg");
+  var stSent = $("st-sent"), stGot = $("st-got"), stSeen = $("st-seen");
+  var modeType = $("mode-type"), modeVoice = $("mode-voice"), typePanel = $("type-panel"), voicePanel = $("voice-panel");
+  var uploadEl = $("upload"), uploadFill = $("upload-fill");
+  var Voice = window.PagerVoice || { supported: false, why: "" }, Riko = window.Riko || { set: function () {} };
   var statusEl = $("status"), bigStamp = $("big-stamp"), sentStamp = $("sent-stamp"), againBtn = $("again");
 
   /* ---------- helpers ---------- */
@@ -84,10 +87,16 @@
     var label = ((h % 12) || 12) + ":" + String(m).padStart(2, "0") + (h < 12 ? " am" : " pm");
     return { h: h, label: label, quiet: h >= 23 || h < 7 };
   }
-  function minutesBetween(a, b) {
-    var m = Math.max(0, Math.round((b - a) / 60000));
-    return m < 1 ? "under a minute" : m === 1 ? "1 minute" : m + " minutes";
+  function clockTimeS(ms) {
+    var d = new Date(ms);
+    try { return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }).toLowerCase(); }
+    catch (e) { return d.toTimeString().slice(0, 8); }
   }
+  function elapsed(ms) {
+    var s = Math.max(0, Math.round(ms / 1000));
+    return s < 60 ? s + "s" : Math.floor(s / 60) + "m " + String(s % 60).padStart(2, "0") + "s";
+  }
+  function mmss(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
   // HTTP headers are Latin-1; ntfy decodes RFC 2047 so names like "Zoë" or "शिवा" survive.
   function headerSafe(s) {
     if (/^[\x20-\x7e]*$/.test(s)) return s;
@@ -139,6 +148,9 @@
     quietTime.textContent = "It's " + d.label;
   }
 
+  var mode = "type";
+  function baseHint() { return mode === "voice" ? "one page every 30 seconds, up to 20 seconds of voice." : "one page every 30 seconds, up to 280 characters."; }
+
   /* ---------- rate limit ---------- */
   var limitTimer = null;
   function waitLeft() {
@@ -157,7 +169,7 @@
     } else {
       sendBtn.removeAttribute("aria-disabled");
       sendLabel.textContent = "page briyan";
-      limitHint.textContent = "one page every 30 seconds, up to 280 characters.";
+      limitHint.textContent = baseHint();
       if (limitTimer) { clearInterval(limitTimer); limitTimer = null; }
       if (!problem.hidden && problem.dataset.kind === "limit") showProblem(null);
     }
@@ -176,6 +188,22 @@
     if (text) input.setAttribute("aria-invalid", "true"); else input.removeAttribute("aria-invalid");
   }
 
+  /* ---------- mode: type it / voice message ---------- */
+  function setMode(m) {
+    if (m === "voice" && !Voice.supported) { showProblem(Voice.why || "Voice messages aren't available in this browser. Type your message instead.", "voice"); return; }
+    if (problem.dataset.kind === "voice") showProblem(null);
+    mode = m;
+    modeType.setAttribute("aria-pressed", m === "type" ? "true" : "false");
+    modeVoice.setAttribute("aria-pressed", m === "voice" ? "true" : "false");
+    typePanel.hidden = m !== "type"; voicePanel.hidden = m !== "voice";
+    if (m === "type" && Voice.pause) Voice.pause();
+    if (!waitLeft()) limitHint.textContent = baseHint();
+  }
+  modeType.addEventListener("click", function () { setMode("type"); });
+  modeVoice.addEventListener("click", function () { setMode("voice"); });
+  if (!Voice.supported) modeVoice.setAttribute("aria-disabled", "true");
+  if (Voice.onChange) Voice.onChange(function () { if (Voice.result && Voice.result()) Voice.showErr(""); });
+
   /* ---------- sending ---------- */
   var sending = false;
   function setSending(on) {
@@ -183,18 +211,18 @@
     sendBtn.setAttribute("aria-busy", on ? "true" : "false");
     if (on) { sendBtn.setAttribute("aria-disabled", "true"); sendLabel.textContent = "sending"; }
     nameEl.readOnly = on; msgEl.readOnly = on; urgentEl.disabled = on; personalEl.disabled = on; topicEl.disabled = on;
-    if (!on) paintLimit();
+    modeType.disabled = on; modeVoice.disabled = on;
+    if (Voice.lock) Voice.lock(on);
+    if (!on) { uploadEl.hidden = true; paintLimit(); }
   }
 
-  function publish(name, message, urgent, tags) {
+  function publishText(name, body, urgent, tags) {
     var ctrl = typeof AbortController === "function" ? new AbortController() : null;
     var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 15000) : null;
     return fetch(NTFY + topic, {
-      method: "POST",
-      body: message,
+      method: "POST", body: body,
       headers: { "Title": headerSafe(name), "Priority": urgent ? "5" : "3", "Tags": tags },
-      cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer",
-      signal: ctrl ? ctrl.signal : undefined
+      cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: ctrl ? ctrl.signal : undefined
     }).then(function (res) {
       if (timer) clearTimeout(timer);
       if (res.status === 429) throw new Error("ntfy says slow down. give it a minute, then try again.");
@@ -204,9 +232,34 @@
       if (timer) clearTimeout(timer);
       if (err && err.name === "AbortError") throw new Error("ntfy took too long to answer. check your connection and try again.");
       throw new Error("couldn't reach ntfy. check your connection and try again.");
-    }).then(function (data) {
-      if (!data || !data.id) throw new Error("ntfy answered oddly, so it may not have gone through. try again.");
-      return data;
+    }).then(checkData);
+  }
+  function checkData(data) {
+    if (!data || !data.id) throw new Error("ntfy answered oddly, so it may not have gone through. try again.");
+    return data;
+  }
+  // Voice: HTTP PUT of the WAV as an ntfy attachment (XHR so we can show upload progress).
+  function publishVoice(name, wav, msgHeader, urgent, tags, onProgress) {
+    return new Promise(function (resolve, reject) {
+      var x = new XMLHttpRequest();
+      x.open("PUT", NTFY + topic);
+      x.timeout = 90000;
+      x.setRequestHeader("Filename", "voice.wav");
+      x.setRequestHeader("Title", headerSafe(name));
+      x.setRequestHeader("Priority", urgent ? "5" : "3");
+      x.setRequestHeader("Tags", tags);
+      if (msgHeader) x.setRequestHeader("Message", headerSafe(msgHeader));
+      x.upload.onprogress = function (e) { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+      x.onload = function () {
+        if (x.status === 413) return reject(new Error("that recording is too big for ntfy. try a shorter one."));
+        if (x.status === 429) return reject(new Error("ntfy is limiting uploads right now. wait a minute and try again, or type it."));
+        if (x.status === 507) return reject(new Error("ntfy has no room for attachments right now. try again later, or type it."));
+        if (x.status < 200 || x.status > 299) return reject(new Error("ntfy didn't take the recording (error " + x.status + "). try again in a moment."));
+        try { resolve(checkData(JSON.parse(x.responseText))); } catch (e) { reject(e); }
+      };
+      x.onerror = function () { reject(new Error("couldn't reach ntfy. check your connection and try again.")); };
+      x.ontimeout = function () { reject(new Error("the upload took too long. check your connection and try again.")); };
+      x.send(wav);
     });
   }
 
@@ -214,14 +267,19 @@
     e.preventDefault();
     if (sending) return;
     var name = nameEl.value.replace(/\s+/g, " ").trim();
-    var message = msgEl.value.trim();
+    var voice = mode === "voice", rec = voice && Voice.result ? Voice.result() : null;
+    var message = voice ? (Voice.note ? Voice.note() : "") : msgEl.value.trim();
     fieldError(nameEl, nameErr, name ? "" : "add your name so Briyan knows who's paging.");
-    fieldError(msgEl, msgErr, message ? "" : "write something first, even just “hi”.");
+    if (!voice) fieldError(msgEl, msgErr, message ? "" : "write something first, even just “hi”.");
     var needTopic = !personalEl.checked && !topicEl.value;
     fieldError(topicEl, topicErr, needTopic ? "pick what you need help with, or tick personal." : "");
     if (!name) { nameEl.focus(); return; }
     if (needTopic) { topicEl.focus(); return; }
-    if (!message) { msgEl.focus(); return; }
+    if (voice && !rec) {
+      Voice.showErr(Voice.busy && Voice.busy() ? "finish your recording first." : "record something first, or switch to type it.");
+      $("rec").focus(); return;
+    }
+    if (!voice && !message) { msgEl.focus(); return; }
     var s = waitLeft();
     if (s > 0) { showProblem("hang on, one page every 30 seconds. you can send again in " + s + "s.", "limit"); return; }
 
@@ -229,16 +287,27 @@
     save(KEY_NAME, name);
     var urgent = urgentEl.checked, personal = personalEl.checked, kind = classify(name, personal);
     var tkey = personal ? "" : topicEl.value, tlabel = TOPICS[tkey] || "";
-    var body = message.slice(0, MAX_LEN), tags = "web";
-    if (personal) tags += ",personal";
-    else { body = "[" + tlabel + "] " + body; tags += ",hcb-" + tkey; }
+    var prefix = personal ? "" : "[" + tlabel + "] ";
+    var tags = "web" + (voice ? ",voice" : "") + (personal ? ",personal" : ",hcb-" + tkey);
+    var loud = voice && Voice.loud();
+    if (loud) tags += ",play";
+    var dur = rec ? rec.dur : 0, job;
     setSending(true);
-    publish(name, body, urgent, tags).then(function (data) {
+    if (voice) {
+      uploadEl.hidden = false; uploadFill.style.transform = "scaleX(0)";
+      job = publishVoice(name, rec.wav, prefix + (message || "voice message " + mmss(dur)), urgent, tags, function (f) {
+        uploadFill.style.transform = "scaleX(" + f.toFixed(3) + ")"; sendLabel.textContent = "sending " + Math.round(f * 100) + "%";
+      });
+    } else {
+      job = publishText(name, (prefix + message.slice(0, MAX_LEN)), urgent, tags);
+    }
+    job.then(function (data) {
       var sentMs = Date.now();
       save(KEY_LAST, String(sentMs));
       var page = {
         topic: topic, id: String(data.id), time: Number(data.time) || Math.floor(sentMs / 1000),
-        name: name, message: message, urgent: urgent, kind: kind, topicLabel: tlabel, sentMs: sentMs, state: "waiting"
+        name: name, message: message, urgent: urgent, kind: kind, topicLabel: tlabel, voice: dur, loud: !!loud,
+        sentMs: sentMs, state: "waiting"
       };
       save(KEY_PENDING, JSON.stringify(page));
       // Pages sent from this browser in the last 10 minutes, so a name-only ack can't be credited to the wrong one.
@@ -254,130 +323,192 @@
     });
   });
 
-  /* ---------- ticket + acknowledgement ---------- */
-  var current = null, pollTimer = null, fails = 0;
+  /* ---------- ticket: sent -> delivered to Riko -> seen ---------- */
+  var current = null, pollTimer = null, tickTimer = null, es = null, sseOk = false, fails = 0, namedAcks = [], gotIds = {};
 
-  function showTicket(page, moveFocus) {
+  function pageText(p) { return p.voice ? "voice " + mmss(p.voice) + (p.message ? " " + p.message : "") : p.message; }
+
+  function showTicket(page, fresh) {
     current = page;
     compose.hidden = true; ticket.hidden = false;
     tRoute.dataset.kind = page.kind; tRoute.textContent = KIND_STAMP[page.kind];
     var parts = ["from ", ["b", page.name], " · " + clockTime(new Date(page.sentMs))];
     if (page.topicLabel) parts.push(" · " + page.topicLabel);
     if (page.urgent) parts.push(" · ", ["b", "urgent"]);
+    if (page.loud) parts.push(" · plays out loud");
     setText(tMeta, parts);
-    tMsg.textContent = page.message;
-    sentAt.textContent = clockTime(new Date(page.sentMs));
+    tMsg.textContent = page.voice ? "voice message " + mmss(page.voice) + (page.message ? "\n" + page.message : "") : page.message;
     setText(sentStamp, ["sent", ["small", clockTime(new Date(page.sentMs))]]);
     sentStamp.classList.remove("landing");
-    if (moveFocus && !reduceMotion) { void sentStamp.offsetWidth; sentStamp.classList.add("landing"); }
-    paintState(false);
-    if (moveFocus) ticket.focus();
-    if (page.state === "waiting") startPolling();
+    if (fresh && !reduceMotion) { void sentStamp.offsetWidth; sentStamp.classList.add("landing"); }
+    namedAcks = []; gotIds = {};
+    paint(false);
+    rikoSync(fresh);
+    if (fresh) ticket.focus();
+    if (page.state === "waiting") startWatching();
   }
 
-  function paintState(animate) {
-    var p = current;
-    stopSeen.classList.toggle("done", p.state === "seen");
-    stopSeen.classList.toggle("lapsed", p.state === "lapsed");
-    track.dataset.state = p.state;
+  function rikoSync(fresh) {
+    var p = current, base = { name: p.name, text: pageText(p), urgent: p.urgent, voice: !!p.voice };
+    if (p.state === "seen") Riko.set("seen", base);
+    else if (p.state === "lapsed") Riko.set("lapsed", base);
+    else if (p.gotMs) Riko.set("delivered", base);
+    else { base.quiet = !fresh; Riko.set("alert", base); }
+  }
+
+  function setStep(li, done, active, lapsed, t, d, animate) {
+    var was = li.classList.contains("done");
+    li.classList.toggle("done", done);
+    li.classList.toggle("active", active);
+    li.classList.toggle("lapsed", lapsed);
+    li.querySelector(".t").textContent = t;
+    li.querySelector(".d").textContent = d;
+    if (done && !was && animate && !reduceMotion) { li.classList.remove("pop"); void li.offsetWidth; li.classList.add("pop"); }
+  }
+
+  function paint(animate) {
+    var p = current, waiting = p.state === "waiting", lapsed = p.state === "lapsed";
+    var gotAt = p.gotMs ? p.gotMs - p.sentMs : 0;
+    setStep(stSent, true, false, false, clockTimeS(p.sentMs), "", false);
+    setStep(stGot, !!p.gotMs, waiting && !p.gotMs, lapsed && !p.gotMs, p.gotMs ? clockTimeS(p.gotMs) : "", p.gotMs ? "+" + elapsed(gotAt) : (lapsed ? "not yet" : ""), animate);
+    setStep(stSeen, !!p.seenMs, waiting && !!p.gotMs, lapsed && !p.seenMs, p.seenMs ? clockTimeS(p.seenMs) : "", p.seenMs ? "+" + elapsed(p.seenMs - p.sentMs) : (lapsed ? "not yet" : ""), animate);
     bigStamp.classList.remove("landing", "lapsed");
     if (p.state === "seen") {
-      var at = new Date(p.seenMs);
-      seenAt.textContent = clockTime(at);
-      setText(statusEl, [["b", "Seen."], " Briyan read it at " + clockTime(at) + ", " + minutesBetween(p.sentMs, p.seenMs) + " after you sent it."]);
-      setText(bigStamp, ["seen", ["small", clockTime(at)]]);
+      setText(statusEl, [["b", "Seen."], " Briyan read it at " + clockTimeS(p.seenMs) + ", " + elapsed(p.seenMs - p.sentMs) + " after you sent it."]);
+      setText(bigStamp, ["seen", ["small", clockTime(new Date(p.seenMs))]]);
       bigStamp.hidden = false;
       if (animate && !reduceMotion) { void bigStamp.offsetWidth; bigStamp.classList.add("landing"); }
-    } else if (p.state === "lapsed") {
-      seenAt.textContent = "not yet";
-      setText(statusEl, [["b", "No “seen” in 10 minutes."], " It's still on Riko. If it can't wait, reach him another way."]);
-      setText(bigStamp, ["not yet"]);
-      bigStamp.classList.add("lapsed");
-      bigStamp.hidden = false;
+    } else if (lapsed) {
+      setText(statusEl, p.gotMs
+        ? [["b", "Riko has it, but no “seen” in 10 minutes."], " Briyan hasn't looked yet. If it can't wait, reach him another way."]
+        : [["b", "No word from Riko in 10 minutes."], " It may be switched off or offline. If it can't wait, reach him another way."]);
+      setText(bigStamp, ["not yet"]); bigStamp.classList.add("lapsed"); bigStamp.hidden = false;
     } else {
-      seenAt.textContent = "waiting";
-      setText(statusEl, [["b", "It's on its way to Riko."], " This updates by itself when Briyan reads it. Keep the tab open."]);
       bigStamp.hidden = true;
+      setText(statusEl, p.gotMs
+        ? [["b", "Delivered to Riko"], " in " + elapsed(gotAt) + ". Waiting for Briyan to see it."]
+        : [["b", "On its way to Riko."], " This updates by itself. Keep the tab open."]);
     }
-    if (fails >= 3 && p.state === "waiting") statusEl.appendChild(document.createTextNode(" Having trouble checking right now, still trying."));
+    if (fails >= 3 && waiting && !sseOk) statusEl.appendChild(document.createTextNode(" Having trouble checking right now, still trying."));
+    tick();
   }
 
-  function stopPolling() { if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; } }
-  function startPolling() { stopPolling(); fails = 0; poll(); }
+  // live "12s" counter on the step we're waiting for (not announced to screen readers)
+  function tick() {
+    var p = current; if (!p || p.state !== "waiting") return;
+    var li = !p.gotMs ? stGot : stSeen;
+    li.querySelector(".d").textContent = elapsed(Date.now() - p.sentMs) + " so far";
+  }
 
+  /* ---- watching ntfy: EventSource (near instant) with fast polling as the safety net ---- */
   function isAckMsg(m) { return m && m.event === "message" && (m.tags || []).indexOf("riko-ack") >= 0; }
-  function exactAck(m, page) { return isAckMsg(m) && String(m.message || "").trim() === "seen:" + page.id; }
-  // Older Riko firmware acks with "seen by <name>" and the page's title (the sender's name), not the id.
-  function nameAck(m, page) {
-    var body = String(m.message || "").trim();
-    return isAckMsg(m) && body.indexOf("seen:") !== 0 && /seen/i.test(body) && norm(m.title) === norm(page.name);
-  }
+  function ackBody(m) { return String(m.message || "").trim(); }
+  // Older Riko firmware acks with "seen by <name>" and the sender's name as the title, not the id.
+  function nameAck(m, page) { var b = ackBody(m); return b.indexOf("seen:") !== 0 && b.indexOf("got:") !== 0 && /seen/i.test(b) && norm(m.title) === norm(page.name); }
   // Earlier pages from this browser, same name, still inside the 10 minute window: a name-only ack might be theirs.
   function siblings(page) {
     return (loadJSON(KEY_RECENT) || []).filter(function (r) {
       return r.id !== page.id && r.name === norm(page.name) && r.sentMs < page.sentMs && page.sentMs - r.sentMs < WAIT_MS;
     });
   }
+  function sinceTime(page) { return siblings(page).reduce(function (t, r) { return Math.min(t, r.time); }, page.time); }
+
+  function ingest(m, page) {
+    if (!isAckMsg(m) || current !== page || page.state !== "waiting") return;
+    if (m.id) { if (gotIds[m.id]) return; gotIds[m.id] = 1; }
+    var t = (Number(m.time) || Date.now() / 1000) * 1000, b = ackBody(m);
+    if (b === "got:" + page.id) { markGot(page, t); return; }
+    if (b === "seen:" + page.id) { settle("seen", t); return; }
+    if (nameAck(m, page)) {
+      namedAcks.push(m);
+      var mine = namedAcks.filter(function (x) { return (x.time || 0) >= page.time; });
+      if (mine.length && namedAcks.length >= siblings(page).length + 1) settle("seen", (Number(mine[mine.length - 1].time) || Date.now() / 1000) * 1000);
+    }
+  }
+  function markGot(page, t) {
+    if (page.gotMs) return;
+    page.gotMs = Math.max(t, page.sentMs); save(KEY_PENDING, JSON.stringify(page));
+    paint(true); rikoSync(false);
+  }
+  function settle(state, ms) {
+    stopWatching();
+    current.state = state;
+    if (state === "seen") {
+      current.seenMs = Math.max(ms || Date.now(), current.sentMs);
+      if (!current.gotMs) current.gotMs = current.seenMs;   // seen implies delivered
+    }
+    save(KEY_PENDING, JSON.stringify(current));
+    paint(true); rikoSync(false);
+  }
+
+  function stopWatching() {
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+    if (es) { es.close(); es = null; }
+    sseOk = false;
+  }
+  function startWatching() {
+    stopWatching(); fails = 0;
+    var page = current;
+    if (typeof EventSource === "function") {
+      try {
+        es = new EventSource(NTFY + page.topic + "/sse?since=" + sinceTime(page));
+        es.onopen = function () { sseOk = true; fails = 0; };
+        es.onmessage = function (e) { var m; try { m = JSON.parse(e.data); } catch (x) { return; } ingest(m, page); };
+        es.onerror = function () { sseOk = false; };   // EventSource reconnects by itself; polling covers the gap
+      } catch (e) { es = null; }
+    }
+    tickTimer = setInterval(tick, 1000);
+    poll();
+  }
 
   function poll() {
     var page = current;
     if (!page || page.state !== "waiting") return;
-    var expired = Date.now() - page.sentMs > WAIT_MS;   // one last look before giving up
-    var sib = siblings(page);
-    var since = sib.reduce(function (t, r) { return Math.min(t, r.time); }, page.time);
-    fetch(NTFY + page.topic + "/json?poll=1&since=" + since, { cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer" })
+    var age = Date.now() - page.sentMs, expired = age > WAIT_MS;   // one last look before giving up
+    fetch(NTFY + page.topic + "/json?poll=1&since=" + sinceTime(page), { cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer" })
       .then(function (res) { if (!res.ok) throw new Error(res.status); return res.text(); })
       .then(function (txt) {
         if (current !== page) return;
-        var hadFails = fails >= 3;
-        fails = 0;
-        var lines = txt.split("\n"), named = [];
-        for (var i = 0; i < lines.length; i++) {
-          if (!lines[i]) continue;
-          var m; try { m = JSON.parse(lines[i]); } catch (e) { continue; }
-          if (exactAck(m, page)) { settle("seen", (Number(m.time) || Date.now() / 1000) * 1000); return; }
-          if (nameAck(m, page)) named.push(m);
-        }
-        // Name-only acks count only when there is one for every page this browser sent under that name in the
-        // window, and at least one arrived after this page went out.
-        var mine = named.filter(function (m) { return (m.time || 0) >= page.time; });
-        if (mine.length && named.length >= sib.length + 1) {
-          settle("seen", (Number(mine[mine.length - 1].time) || Date.now() / 1000) * 1000); return;
-        }
+        var hadFails = fails >= 3; fails = 0;
+        txt.split("\n").forEach(function (line) {
+          if (!line) return;
+          var m; try { m = JSON.parse(line); } catch (e) { return; }
+          ingest(m, page);
+        });
+        if (page.state !== "waiting") return;
         if (expired) { settle("lapsed"); return; }
-        if (hadFails) paintState(false);
-        schedule();
+        if (hadFails) paint(false);
+        schedule(page);
       }, function () {
-        if (current !== page) return;
+        if (current !== page || page.state !== "waiting") return;
         if (expired) { settle("lapsed"); return; }
         fails++;
-        if (fails === 3) paintState(false);
-        schedule();
+        if (fails === 3) paint(false);
+        schedule(page);
       });
   }
-  function schedule() { stopPolling(); pollTimer = setTimeout(poll, POLL_MS); }
-
-  function settle(state, ms) {
-    stopPolling();
-    current.state = state;
-    if (state === "seen") current.seenMs = Math.max(ms || Date.now(), current.sentMs);
-    save(KEY_PENDING, JSON.stringify(current));
-    paintState(true);
+  function schedule(page) {
+    if (pollTimer) clearTimeout(pollTimer);
+    var age = Date.now() - page.sentMs;
+    pollTimer = setTimeout(poll, sseOk ? POLL_SSE : age < FAST_MS ? POLL_FAST : POLL_SLOW);
   }
 
   document.addEventListener("visibilitychange", function () {
-    if (!document.hidden && current && current.state === "waiting") startPolling();
+    if (!document.hidden && current && current.state === "waiting") startWatching();
   });
 
   againBtn.addEventListener("click", function () {
-    stopPolling();
+    stopWatching();
     current = null;
     save(KEY_PENDING, null);
     ticket.hidden = true; compose.hidden = false;
     msgEl.value = ""; urgentEl.checked = false; topicEl.value = ""; fieldError(topicEl, topicErr, "");
+    if (Voice.reset) Voice.reset();
     fieldError(msgEl, msgErr, ""); showProblem(null);
+    Riko.set("idle");
     paintCount(); paintLimit();
-    msgEl.focus();
+    (mode === "voice" ? $("rec") : msgEl).focus();
   });
 
   /* ---------- inputs ---------- */
@@ -389,7 +520,7 @@
   msgEl.addEventListener("input", function () { paintCount(); if (msgEl.value.trim()) fieldError(msgEl, msgErr, ""); });
   // Enter in the name field moves on to the message until there is one; Ctrl/Cmd+Enter sends from the message.
   nameEl.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && !msgEl.value.trim()) { e.preventDefault(); msgEl.focus(); }
+    if (e.key === "Enter" && mode === "type" && !msgEl.value.trim()) { e.preventDefault(); msgEl.focus(); }
   });
   msgEl.addEventListener("keydown", function (e) {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); compose.requestSubmit ? compose.requestSubmit() : sendBtn.click(); }

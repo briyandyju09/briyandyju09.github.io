@@ -38,6 +38,22 @@
       <svg class="ico moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 14.6A7.8 7.8 0 0 1 9.4 4.6a7.9 7.9 0 1 0 10 10z"/></svg>
       <span id="clock-text">Dubai time</span>
     </p>
+    <div class="riko-stage">
+      <div class="riko" id="riko" data-mode="idle" role="img" aria-label="Riko, Briyan's pocket device (a CyberPi), drawn in 3D. Its screen and lights react when you send a page.">
+        <div class="riko-tilt"><div class="riko-float"><div class="riko-buzz"><div class="riko-body">
+          <i class="slab" style="--z:-.9em"></i><i class="slab" style="--z:-.6em"></i><i class="slab" style="--z:-.3em"></i>
+          <i class="slab" style="--z:0em"></i><i class="slab" style="--z:.3em"></i><i class="slab" style="--z:.6em"></i><i class="slab" style="--z:.9em"></i>
+          <div class="rk-back"></div>
+          <div class="rk-face">
+            <div class="rk-bezel"><canvas id="riko-screen" width="64" height="64"></canvas></div>
+            <div class="rk-dpad"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><i class="c"></i></div>
+            <i class="rk-btn a"></i><i class="rk-btn b"></i><i class="rk-menu"></i>
+            <div class="rk-leds"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+        </div></div></div></div>
+        <i class="riko-shadow"></i>
+      </div>
+    </div>
   </section>
 
   <section class="slip" id="slip" aria-label="Send a page">
@@ -80,7 +96,12 @@
         <p class="err" id="topic-err" hidden></p>
       </div>
 
-      <div class="field">
+      <div class="modes" role="group" aria-label="how do you want to send it?">
+        <button type="button" class="seg" id="mode-type" aria-pressed="true">type it</button>
+        <button type="button" class="seg" id="mode-voice" aria-pressed="false">voice message</button>
+      </div>
+
+      <div class="field" id="type-panel">
         <div class="label-row">
           <label for="msg">your message</label>
           <span class="count" id="count" aria-hidden="true">0/280</span>
@@ -95,6 +116,36 @@
         </div>
       </div>
 
+      <div class="field voice" id="voice-panel" hidden data-state="idle">
+        <span class="lbl" id="voice-lbl">your voice message</span>
+        <div class="rec-row">
+          <button type="button" class="rec" id="rec" aria-labelledby="voice-lbl rec-help">
+            <svg class="ico rec-mic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg>
+            <svg class="ico rec-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.5"/></svg>
+          </button>
+          <div class="rec-info">
+            <p class="rec-time" id="rec-time" aria-hidden="true">0:00<span> / 0:20</span></p>
+            <div class="meter" id="meter" aria-hidden="true"><i id="meter-fill"></i></div>
+            <p class="rec-help" id="rec-help">hold or tap to record, up to 20 seconds.</p>
+          </div>
+        </div>
+        <div class="rec-actions" id="rec-actions" hidden>
+          <button type="button" class="chip" id="rec-play">listen back</button>
+          <button type="button" class="chip" id="rec-again">re-record</button>
+          <button type="button" class="chip" id="rec-discard">discard</button>
+        </div>
+        <p class="err" id="voice-err" hidden></p>
+        <div class="field">
+          <label for="note">add a note <span class="opt">(optional)</span></label>
+          <input id="note" type="text" maxlength="120" autocomplete="off" enterkeyhint="done">
+        </div>
+        <label class="check sub" for="loud">
+          <input type="checkbox" id="loud">
+          <span class="check-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5.5 12.5l4.2 4.2 8.8-9.4"/></svg></span>
+          <span class="check-text">play it out loud on Riko<small>Riko will speak it when Briyan is nearby. Leave off if you'd rather he reads it first.</small></span>
+        </label>
+      </div>
+
       <div class="quiet" id="quiet" hidden>
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 14.6A7.8 7.8 0 0 1 9.4 4.6a7.9 7.9 0 1 0 10 10z"/></svg>
         <p><b id="quiet-time">It's late</b> for Briyan. If it can wait, morning is kinder. If it really can't, tick urgent.</p>
@@ -105,7 +156,7 @@
         <span class="toggle-box" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M5.5 12.5l4.2 4.2 8.8-9.4"/></svg>
         </span>
-        <span class="toggle-text"><b>urgent</b><span>flags it loud on Riko. keep it for real fires.</span></span>
+        <span class="toggle-text"><b>urgent</b><span>sounds a loud alarm on his device. only for real fires.</span></span>
       </label>
 
       <div class="problem" id="problem" role="alert" hidden>
@@ -113,6 +164,7 @@
         <p id="problem-text"></p>
       </div>
 
+      <div class="upload" id="upload" hidden aria-hidden="true"><i id="upload-fill"></i></div>
       <button type="submit" class="btn send" id="send">
         <span id="send-label">page briyan</span>
         <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12h13.5M13 6.5l5.5 5.5-5.5 5.5"/></svg>
@@ -131,10 +183,10 @@
 
       <div class="tear" aria-hidden="true"></div>
 
-      <ol class="track" id="track" aria-label="delivery">
-        <li class="stop done" id="stop-sent"><i class="dot" aria-hidden="true"></i><span><b>sent</b><small id="sent-at"></small></span></li>
-        <li class="leg" aria-hidden="true"><i></i><i></i><i></i></li>
-        <li class="stop" id="stop-seen"><i class="dot" aria-hidden="true"></i><span><b>seen</b><small id="seen-at">waiting</small></span></li>
+      <ol class="steps" id="track" aria-label="delivery progress">
+        <li class="step done" id="st-sent"><i class="dot" aria-hidden="true"></i><b>sent</b><small class="t" id="sent-at"></small><small class="d"></small></li>
+        <li class="step" id="st-got"><i class="dot" aria-hidden="true"></i><b>delivered</b><small class="t"></small><small class="d"></small></li>
+        <li class="step" id="st-seen"><i class="dot" aria-hidden="true"></i><b>seen</b><small class="t"></small><small class="d"></small></li>
       </ol>
       <div class="verdict">
         <p class="status" id="status" role="status"></p>
@@ -157,6 +209,8 @@
   <p class="testing" id="testing" hidden></p>
 </footer>
 
+<script src="riko.js"></script>
+<script src="voice.js"></script>
 <script src="pager.js"></script>
 </body>
 </html>
